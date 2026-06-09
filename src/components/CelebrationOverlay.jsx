@@ -1,5 +1,20 @@
 import { motion, AnimatePresence } from 'framer-motion';
 
+/** Parse **bold** markers into <strong> elements */
+function renderBoldText(text) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={i} className="text-[var(--color-primary)] font-bold">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
 export default function CelebrationOverlay({
   show,
   celebration,
@@ -88,7 +103,7 @@ export default function CelebrationOverlay({
                 🔍 Real Code Reveal — {celebration.concept}
               </h3>
               <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">
-                {celebration.explanation}
+                {renderBoldText(celebration.explanation)}
               </p>
             </div>
 

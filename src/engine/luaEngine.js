@@ -115,9 +115,9 @@ export function simulateExecution(commands, stage) {
       return { steps, success: false };
     }
 
-    // Check for wall
+    // Check for wall or solid platform
     const targetTile = grid[newRow]?.[newCol];
-    if (targetTile === 2) {
+    if (targetTile === 1 || targetTile === 2) {
       steps.push({
         col: pos.col,
         row: pos.row,
