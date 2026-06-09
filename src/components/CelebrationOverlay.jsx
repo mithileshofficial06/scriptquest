@@ -20,6 +20,7 @@ export default function CelebrationOverlay({
   celebration,
   lineCount,
   optimalLines,
+  lineCountChallenge,
   onContinue,
   onRetry,
 }) {
@@ -121,9 +122,39 @@ export default function CelebrationOverlay({
               <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--color-text-secondary)' }}>
                 {renderBoldText(celebration.explanation)}
               </p>
+
+              {/* Code hint — shows the better approach */}
+              {celebration.codeHint && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="mt-4"
+                >
+                  <div
+                    className="rounded-xl px-4 py-3"
+                    style={{
+                      background: 'rgba(232, 185, 74, 0.06)',
+                      border: '1px solid rgba(232, 185, 74, 0.12)',
+                    }}
+                  >
+                    <code
+                      className="text-sm font-semibold block"
+                      style={{ fontFamily: 'var(--font-code)', color: 'var(--color-primary)' }}
+                    >
+                      {celebration.codeHint}
+                    </code>
+                  </div>
+                  {celebration.codeHintLabel && (
+                    <p className="text-[11px] mt-2 text-center" style={{ color: 'var(--color-text-dim)' }}>
+                      {celebration.codeHintLabel}
+                    </p>
+                  )}
+                </motion.div>
+              )}
             </div>
 
-            {/* Optimization challenge */}
+            {/* Line count challenge / optimization prompt */}
             {canOptimize && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -136,10 +167,15 @@ export default function CelebrationOverlay({
                 }}
               >
                 <p className="text-sm font-semibold" style={{ color: 'var(--color-accent-purple)' }}>
-                  ✨ Can you reach the star in fewer lines?
+                  {celebration.retryPrompt
+                    ? celebration.retryPrompt
+                    : lineCountChallenge
+                      ? `✨ Can you do it in under ${lineCountChallenge} lines?`
+                      : '✨ Can you reach the star in fewer lines?'
+                  }
                 </p>
                 <p className="text-xs mt-1" style={{ color: 'var(--color-text-dim)' }}>
-                  Best possible: {optimalLines} lines
+                  Best possible: {optimalLines} {optimalLines === 1 ? 'line' : 'lines'}
                 </p>
               </motion.div>
             )}
@@ -152,7 +188,7 @@ export default function CelebrationOverlay({
                 onClick={onRetry}
                 className="btn-secondary flex-1 text-xs py-3"
               >
-                Try Again
+                {canOptimize && celebration.codeHint ? 'Try with repeat()' : 'Try Again'}
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }}

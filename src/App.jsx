@@ -263,6 +263,7 @@ export default function App() {
         celebration={stage?.celebration}
         lineCount={lineCount}
         optimalLines={stage?.optimalLines ?? 0}
+        lineCountChallenge={stage?.lineCountChallenge}
         onContinue={handleContinue}
         onRetry={handleRetry}
       />

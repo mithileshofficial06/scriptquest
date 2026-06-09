@@ -51,18 +51,39 @@ export const stages = [
   },
   {
     id: 2,
-    name: 'Jump & Leap',
-    subtitle: 'Variables',
-    description: 'Coming soon...',
-    availableFunctions: [],
-    starterCode: '',
-    grid: [],
-    playerStart: { col: 0, row: 0 },
-    starPosition: { col: 0, row: 0 },
-    optimalLines: 0,
-    celebration: { title: '', explanation: '', concept: '' },
-    errorMessages: {},
-    locked: true,
+    name: 'Loop Land',
+    subtitle: 'Loops',
+    description: 'Reach the star — but can you do it in fewer lines?',
+    availableFunctions: ['moveRight()', 'moveLeft()', 'repeat(n, func)'],
+    starterCode: '-- The star is far away!\n-- Try reaching it with moveRight()\n\n',
+    grid: [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    ],
+    playerStart: { col: 1, row: 5 },
+    starPosition: { col: 9, row: 5 }, // 8 steps to the right
+    optimalLines: 1, // repeat(8, moveRight)
+    lineCountChallenge: 3, // "Can you do it in under 3 lines?"
+    celebration: {
+      title: '🎉 You reached the star!',
+      explanation:
+        'You wrote **moveRight()** eight times — and it worked! But writing the same thing over and over is tedious.\n\nIn Lua, you can use a **loop** to repeat a command. Instead of 8 lines, try this:',
+      concept: 'Loops',
+      codeHint: 'repeat(8, moveRight)',
+      codeHintLabel: 'Same result, just 1 line! 🤯',
+      retryPrompt: '🔁 Try it with repeat() — can you do it in under 3 lines?',
+    },
+    errorMessages: {
+      wall: "Nothing there to walk into. Try a different direction!",
+      fall: "Whoops! Your avatar fell off the edge!",
+      outOfBounds: "That's outside the world! Stay on the path.",
+    },
   },
   {
     id: 3,

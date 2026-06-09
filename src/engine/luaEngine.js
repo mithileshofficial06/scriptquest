@@ -20,6 +20,10 @@ const COMMAND_MAP = {
 
 /**
  * Parse Lua source code and extract a sequence of commands.
+ * Supports:
+ *   - Simple calls:    moveRight()
+ *   - Repeat loops:    repeat(8, moveRight)
+ *
  * Returns { commands: [...], error: null } on success,
  * or { commands: [], error: { line, message } } on failure.
  */
@@ -34,10 +38,10 @@ export function parseLuaCode(code) {
     // Skip empty lines and comments
     if (!line || line.startsWith('--')) continue;
 
-    // Try to match a command call
-    const match = line.match(/^(\w+)\(\s*\)$/);
-    if (match) {
-      const funcName = match[1];
+    // Try to match a simple command call: funcName()
+    const simpleMatch = line.match(/^(\w+)\(\s*\)$/);
+    if (simpleMatch) {
+      const funcName = simpleMatch[1];
       if (COMMAND_MAP[funcName]) {
         commands.push({
           name: funcName,
@@ -45,6 +49,7 @@ export function parseLuaCode(code) {
           line: lineNum,
           source: line,
         });
+        continue;
       } else {
         return {
           commands: [],
@@ -54,13 +59,56 @@ export function parseLuaCode(code) {
           },
         };
       }
-    } else if (line.length > 0) {
-      // It's not a comment, not empty, not a valid command — syntax error
+    }
+
+    // Try to match a repeat call: repeat(N, funcName)
+    const repeatMatch = line.match(/^repeat\(\s*(\d+)\s*,\s*(\w+)\s*\)$/);
+    if (repeatMatch) {
+      const count = parseInt(repeatMatch[1], 10);
+      const funcName = repeatMatch[2];
+
+      if (!COMMAND_MAP[funcName]) {
+        return {
+          commands: [],
+          error: {
+            line: lineNum,
+            message: `Unknown function inside repeat: ${funcName}. Try repeat(8, moveRight)`,
+          },
+        };
+      }
+
+      if (count <= 0 || count > 100) {
+        return {
+          commands: [],
+          error: {
+            line: lineNum,
+            message: `repeat count must be between 1 and 100. You wrote ${count}.`,
+          },
+        };
+      }
+
+      // Expand the repeat into individual commands, all pointing to the same line
+      for (let r = 0; r < count; r++) {
+        commands.push({
+          name: funcName,
+          delta: COMMAND_MAP[funcName],
+          line: lineNum,
+          source: `${funcName}()  -- repeat ${r + 1}/${count}`,
+          isRepeat: true,
+          repeatIndex: r,
+          repeatTotal: count,
+        });
+      }
+      continue;
+    }
+
+    // Nothing matched — syntax error
+    if (line.length > 0) {
       return {
         commands: [],
         error: {
           line: lineNum,
-          message: `I don't understand "${line}". Try using a command like moveRight()`,
+          message: `I don't understand "${line}". Try a command like moveRight() or repeat(8, moveRight)`,
         },
       };
     }
