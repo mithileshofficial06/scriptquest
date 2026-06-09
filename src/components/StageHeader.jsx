@@ -5,25 +5,32 @@ export default function StageHeader({ stage }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: -15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="absolute top-4 left-4 z-10 flex items-center gap-3"
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="absolute top-5 left-5 z-10"
     >
-      {/* Stage badge */}
-      <div className="glass-panel rounded-2xl px-4 py-2.5 flex items-center gap-3">
+      <div
+        className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-3"
+        style={{ border: '1px solid var(--color-border-accent)' }}
+      >
+        {/* Stage number badge */}
         <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg"
+          className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-sm"
           style={{
-            background: 'linear-gradient(135deg, var(--color-primary), var(--color-accent-purple))',
+            background: 'var(--color-primary)',
+            color: 'var(--color-bg-dark)',
+            boxShadow: '0 2px 12px var(--color-primary-glow)',
           }}
         >
           {stage.id}
         </div>
+
         <div>
-          <h1 className="text-base font-extrabold tracking-tight leading-tight">
+          <h1 className="text-sm font-extrabold tracking-tight leading-tight" style={{ color: 'var(--color-text)' }}>
             {stage.name}
           </h1>
-          <p className="text-xs text-white/50 font-semibold">
+          <p className="text-[11px] font-medium" style={{ color: 'var(--color-text-dim)' }}>
             {stage.description}
           </p>
         </div>

@@ -6,7 +6,7 @@ function renderBoldText(text) {
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return (
-        <strong key={i} className="text-[var(--color-primary)] font-bold">
+        <strong key={i} className="font-bold" style={{ color: 'var(--color-primary)' }}>
           {part.slice(2, -2)}
         </strong>
       );
@@ -35,30 +35,32 @@ export default function CelebrationOverlay({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: 'rgba(10, 10, 30, 0.85)', backdropFilter: 'blur(8px)' }}
+          style={{ background: 'rgba(4, 4, 8, 0.88)', backdropFilter: 'blur(12px)' }}
         >
-          {/* Floating confetti particles */}
+          {/* Floating golden particles */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {Array.from({ length: 40 }, (_, i) => (
+            {Array.from({ length: 35 }, (_, i) => (
               <motion.div
                 key={i}
-                className="absolute rounded"
+                className="absolute"
                 style={{
-                  width: 8 + Math.random() * 8,
-                  height: 8 + Math.random() * 8,
+                  width: 4 + Math.random() * 6,
+                  height: 4 + Math.random() * 6,
                   left: `${Math.random() * 100}%`,
-                  top: '-5%',
-                  background: ['#ffd93d', '#ff6b9d', '#00d4ff', '#6bcb77', '#a855f7'][i % 5],
+                  top: '-3%',
+                  background: ['#e8b94a', '#f0d78c', '#c678dd', '#98c379', '#61afef', '#e06c75'][i % 6],
+                  borderRadius: i % 3 === 0 ? '50%' : '2px',
                   rotate: `${Math.random() * 360}deg`,
                 }}
                 animate={{
-                  y: ['0vh', '110vh'],
-                  x: [0, (Math.random() - 0.5) * 200],
-                  rotate: [0, Math.random() * 720],
+                  y: ['0vh', '105vh'],
+                  x: [0, (Math.random() - 0.5) * 150],
+                  rotate: [0, Math.random() * 540],
+                  opacity: [0, 0.8, 0.8, 0],
                 }}
                 transition={{
-                  duration: 3 + Math.random() * 3,
-                  delay: Math.random() * 2,
+                  duration: 4 + Math.random() * 3,
+                  delay: Math.random() * 2.5,
                   repeat: Infinity,
                   ease: 'linear',
                 }}
@@ -68,41 +70,55 @@ export default function CelebrationOverlay({
 
           {/* Card */}
           <motion.div
-            initial={{ scale: 0.5, y: 50 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.5, y: 50 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            className="glass-panel glow-border rounded-3xl p-8 max-w-lg w-full mx-4 relative"
+            initial={{ scale: 0.6, y: 40, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.6, y: 40, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 180, damping: 16 }}
+            className="glass-panel glow-border rounded-3xl p-8 max-w-md w-full mx-4 relative"
           >
-            {/* Trophy icon */}
+            {/* Trophy */}
             <motion.div
-              className="text-6xl text-center mb-4"
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
+              className="text-5xl text-center mb-5"
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
             >
               🏆
             </motion.div>
 
             {/* Title */}
-            <h2 className="text-2xl font-black text-center mb-2 text-gradient">
+            <h2 className="text-xl font-black text-center mb-3 text-gradient">
               {celebration.title}
             </h2>
 
-            {/* Line count badge */}
-            <div className="flex justify-center mb-4">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
-                <span className="text-sm font-bold text-[var(--color-accent-yellow)]">
-                  📝 {lineCount} lines of code
-                </span>
+            {/* Line count */}
+            <div className="flex justify-center mb-5">
+              <div
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold"
+                style={{
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border-accent)',
+                  color: 'var(--color-primary)',
+                }}
+              >
+                📝 {lineCount} lines of code
               </div>
             </div>
 
             {/* Real Code Reveal */}
-            <div className="bg-black/30 rounded-2xl p-5 mb-4 border border-white/5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] mb-3">
+            <div
+              className="rounded-2xl p-5 mb-5"
+              style={{
+                background: 'rgba(0, 0, 0, 0.25)',
+                border: '1px solid var(--color-border)',
+              }}
+            >
+              <h3
+                className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3"
+                style={{ color: 'var(--color-primary)' }}
+              >
                 🔍 Real Code Reveal — {celebration.concept}
               </h3>
-              <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">
+              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--color-text-secondary)' }}>
                 {renderBoldText(celebration.explanation)}
               </p>
             </div>
@@ -110,37 +126,41 @@ export default function CelebrationOverlay({
             {/* Optimization challenge */}
             {canOptimize && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="text-center mb-4 p-3 rounded-xl bg-[var(--color-accent-purple)]/10 border border-[var(--color-accent-purple)]/20"
+                className="text-center mb-5 p-3 rounded-xl"
+                style={{
+                  background: 'rgba(198, 120, 221, 0.06)',
+                  border: '1px solid rgba(198, 120, 221, 0.12)',
+                }}
               >
-                <p className="text-sm font-semibold text-[var(--color-accent-purple)]">
+                <p className="text-sm font-semibold" style={{ color: 'var(--color-accent-purple)' }}>
                   ✨ Can you reach the star in fewer lines?
                 </p>
-                <p className="text-xs text-white/50 mt-1">
+                <p className="text-xs mt-1" style={{ color: 'var(--color-text-dim)' }}>
                   Best possible: {optimalLines} lines
                 </p>
               </motion.div>
             )}
 
             {/* Buttons */}
-            <div className="flex gap-3 mt-5">
+            <div className="flex gap-3 mt-6">
               <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={onRetry}
-                className="btn-secondary flex-1 text-sm"
+                className="btn-secondary flex-1 text-xs py-3"
               >
                 Try Again
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={onContinue}
-                className="btn-primary flex-1 text-sm"
+                className="btn-primary flex-1 text-xs py-3"
               >
-                {canOptimize ? 'Continue Anyway →' : 'Next Stage →'}
+                {canOptimize ? 'Continue →' : 'Next Stage →'}
               </motion.button>
             </div>
           </motion.div>

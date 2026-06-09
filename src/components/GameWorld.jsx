@@ -1,7 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { TILE_SIZE, TILE_PLATFORM, TILE_WALL, GRID_COLS, GRID_ROWS } from '../data/stages';
 
-/* ===== SVG Avatar Component — Roblox-style boxy character ===== */
+/* ═══════════════════════════════════════════════════
+   Premium SVG Avatar — refined Roblox-style character
+   ═══════════════════════════════════════════════════ */
 function Avatar({ col, row, isJumping, isFailing, direction }) {
   const x = col * TILE_SIZE;
   const y = row * TILE_SIZE;
@@ -11,100 +13,127 @@ function Avatar({ col, row, isJumping, isFailing, direction }) {
       animate={{
         x,
         y,
-        rotate: isFailing ? [0, -15, 15, -10, 0] : 0,
+        rotate: isFailing ? [0, -12, 12, -8, 0] : 0,
       }}
       transition={{
         type: 'spring',
-        stiffness: 200,
-        damping: 20,
-        duration: 0.4,
+        stiffness: 180,
+        damping: 18,
+        duration: 0.45,
       }}
     >
-      {/* Shadow */}
+      {/* Drop shadow */}
       <ellipse
         cx={TILE_SIZE / 2}
-        cy={TILE_SIZE - 2}
-        rx={18}
-        ry={4}
-        fill="rgba(0,0,0,0.3)"
+        cy={TILE_SIZE - 1}
+        rx={16}
+        ry={3}
+        fill="rgba(0,0,0,0.4)"
       />
+
+      {/* Body — gradient fill */}
+      <defs>
+        <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#e8b94a" />
+          <stop offset="100%" stopColor="#c99630" />
+        </linearGradient>
+        <linearGradient id="headGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#f5e6c8" />
+          <stop offset="100%" stopColor="#e8d5a8" />
+        </linearGradient>
+        <linearGradient id="legGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#2a2a3a" />
+          <stop offset="100%" stopColor="#1a1a28" />
+        </linearGradient>
+      </defs>
+
       {/* Body */}
       <rect
-        x={15}
-        y={18}
-        width={30}
-        height={28}
-        rx={3}
-        fill="#00d4ff"
-        stroke="#0099cc"
-        strokeWidth={2}
+        x={15} y={18} width={30} height={28} rx={4}
+        fill="url(#bodyGrad)"
+        stroke="#b8862a"
+        strokeWidth={1.5}
       />
+      {/* Body shine */}
+      <rect
+        x={17} y={20} width={8} height={12} rx={2}
+        fill="rgba(255,255,255,0.15)"
+      />
+
       {/* Head */}
       <rect
-        x={12}
-        y={2}
-        width={36}
-        height={20}
-        rx={3}
-        fill="#ffd93d"
-        stroke="#ccaa00"
-        strokeWidth={2}
+        x={12} y={2} width={36} height={20} rx={4}
+        fill="url(#headGrad)"
+        stroke="#c9b88a"
+        strokeWidth={1.5}
       />
-      {/* Eyes */}
+
+      {/* Eyes — darker, more expressive */}
       <rect
-        x={direction === 'left' ? 16 : 20}
-        y={8}
-        width={8}
-        height={8}
-        rx={1}
-        fill="#1a1a2e"
+        x={direction === 'left' ? 17 : 21}
+        y={8} width={7} height={8} rx={2}
+        fill="#1a1a28"
       >
         <animate
           attributeName="height"
           values="8;2;8"
-          dur="3s"
+          dur="3.5s"
           repeatCount="indefinite"
-          begin="1s"
+          begin="1.5s"
         />
       </rect>
       <rect
-        x={direction === 'left' ? 28 : 32}
-        y={8}
-        width={8}
-        height={8}
-        rx={1}
-        fill="#1a1a2e"
+        x={direction === 'left' ? 30 : 34}
+        y={8} width={7} height={8} rx={2}
+        fill="#1a1a28"
       >
         <animate
           attributeName="height"
           values="8;2;8"
-          dur="3s"
+          dur="3.5s"
           repeatCount="indefinite"
-          begin="1s"
+          begin="1.5s"
         />
       </rect>
-      {/* Smile */}
+      {/* Eye highlights */}
+      <rect
+        x={direction === 'left' ? 19 : 23}
+        y={9} width={2} height={2} rx={1}
+        fill="rgba(255,255,255,0.7)"
+      />
+      <rect
+        x={direction === 'left' ? 32 : 36}
+        y={9} width={2} height={2} rx={1}
+        fill="rgba(255,255,255,0.7)"
+      />
+
+      {/* Mouth */}
       <path
-        d={`M ${22} ${16} Q ${30} ${22} ${38} ${16}`}
+        d={`M ${23} ${16} Q ${30} ${21} ${37} ${16}`}
         fill="none"
-        stroke="#1a1a2e"
-        strokeWidth={2}
+        stroke="#8a7a6a"
+        strokeWidth={1.5}
         strokeLinecap="round"
       />
+
       {/* Arms */}
-      <rect x={5} y={22} width={10} height={6} rx={2} fill="#00bbdd" />
-      <rect x={45} y={22} width={10} height={6} rx={2} fill="#00bbdd" />
+      <rect x={6} y={22} width={9} height={6} rx={3} fill="#d4a23a" stroke="#b8862a" strokeWidth={1} />
+      <rect x={45} y={22} width={9} height={6} rx={3} fill="#d4a23a" stroke="#b8862a" strokeWidth={1} />
+
       {/* Legs */}
-      <rect x={18} y={46} width={10} height={10} rx={2} fill="#4a6741" />
-      <rect x={32} y={46} width={10} height={10} rx={2} fill="#4a6741" />
+      <rect x={18} y={46} width={10} height={10} rx={3} fill="url(#legGrad)" />
+      <rect x={32} y={46} width={10} height={10} rx={3} fill="url(#legGrad)" />
+
       {/* Shoes */}
-      <rect x={16} y={54} width={14} height={4} rx={2} fill="#333" />
-      <rect x={30} y={54} width={14} height={4} rx={2} fill="#333" />
+      <rect x={16} y={54} width={14} height={4} rx={2} fill="#1a1a28" stroke="#2a2a3a" strokeWidth={0.5} />
+      <rect x={30} y={54} width={14} height={4} rx={2} fill="#1a1a28" stroke="#2a2a3a" strokeWidth={0.5} />
     </motion.g>
   );
 }
 
-/* ===== Star Collectible ===== */
+/* ═══════════════════════════════════════════
+   Star Collectible — golden with warm glow
+   ═══════════════════════════════════════════ */
 function Star({ col, row, collected }) {
   const cx = col * TILE_SIZE + TILE_SIZE / 2;
   const cy = row * TILE_SIZE + TILE_SIZE / 2;
@@ -115,36 +144,33 @@ function Star({ col, row, collected }) {
         <motion.g
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 2, opacity: 0 }}
-          transition={{ duration: 0.5 }}
+          exit={{ scale: 2.5, opacity: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          {/* Glow */}
-          <circle cx={cx} cy={cy} r={22} fill="rgba(255,217,61,0.2)">
-            <animate
-              attributeName="r"
-              values="18;24;18"
-              dur="2s"
-              repeatCount="indefinite"
-            />
+          {/* Outer glow */}
+          <circle cx={cx} cy={cy} r={28} fill="rgba(232,185,74,0.06)">
+            <animate attributeName="r" values="24;30;24" dur="3s" repeatCount="indefinite" />
+          </circle>
+          {/* Inner glow */}
+          <circle cx={cx} cy={cy} r={18} fill="rgba(232,185,74,0.12)">
+            <animate attributeName="r" values="16;20;16" dur="2s" repeatCount="indefinite" />
           </circle>
           {/* Star shape */}
           <motion.polygon
-            points={starPoints(cx, cy, 16, 8)}
-            fill="#ffd93d"
-            stroke="#ffaa00"
-            strokeWidth={2}
+            points={starPoints(cx, cy, 15, 7)}
+            fill="#e8b94a"
+            stroke="#f0d78c"
+            strokeWidth={1.5}
             animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+            transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
             style={{ transformOrigin: `${cx}px ${cy}px` }}
           />
-          {/* Inner sparkle */}
-          <circle cx={cx - 4} cy={cy - 4} r={2} fill="#fff" opacity={0.8}>
-            <animate
-              attributeName="opacity"
-              values="0.8;0.2;0.8"
-              dur="1.5s"
-              repeatCount="indefinite"
-            />
+          {/* Sparkle highlights */}
+          <circle cx={cx - 4} cy={cy - 5} r={1.5} fill="#fff" opacity={0.9}>
+            <animate attributeName="opacity" values="0.9;0.2;0.9" dur="1.8s" repeatCount="indefinite" />
+          </circle>
+          <circle cx={cx + 3} cy={cy + 2} r={1} fill="#f0d78c" opacity={0.6}>
+            <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2.2s" repeatCount="indefinite" begin="0.5s" />
           </circle>
         </motion.g>
       )}
@@ -163,71 +189,88 @@ function starPoints(cx, cy, outerR, innerR) {
   return points.join(' ');
 }
 
-/* ===== Platform Tile ===== */
-function PlatformTile({ col, row }) {
+/* ═══════════════════════════════════════════════════════
+   Platform Tile — dark stone with subtle golden accents
+   ═══════════════════════════════════════════════════════ */
+function PlatformTile({ col, row, isTop }) {
   const x = col * TILE_SIZE;
   const y = row * TILE_SIZE;
 
   return (
     <g>
-      {/* Main block */}
+      {/* Main block — dark stone */}
       <rect
-        x={x}
-        y={y}
-        width={TILE_SIZE}
-        height={TILE_SIZE}
-        fill="#4a6741"
-        stroke="#3d5636"
-        strokeWidth={1}
+        x={x} y={y}
+        width={TILE_SIZE} height={TILE_SIZE}
+        fill="#1a1e24"
+        stroke="#12151a"
+        strokeWidth={0.5}
       />
-      {/* Top grass strip */}
-      <rect
-        x={x}
-        y={y}
-        width={TILE_SIZE}
-        height={6}
-        fill="#6bcb77"
-        rx={1}
-      />
-      {/* Grass tufts */}
-      <rect x={x + 8} y={y - 3} width={3} height={5} rx={1} fill="#5daa68" />
-      <rect x={x + 25} y={y - 4} width={3} height={6} rx={1} fill="#6bcb77" />
-      <rect x={x + 42} y={y - 2} width={3} height={4} rx={1} fill="#5daa68" />
-      {/* Dirt texture dots */}
-      <circle cx={x + 15} cy={y + 30} r={2} fill="#3d5636" opacity={0.5} />
-      <circle cx={x + 40} cy={y + 20} r={1.5} fill="#3d5636" opacity={0.4} />
-      <circle cx={x + 30} cy={y + 45} r={2} fill="#3d5636" opacity={0.3} />
+      {/* Subtle stone texture */}
+      <rect x={x + 5} y={y + 12} width={12} height={8} rx={1} fill="rgba(255,255,255,0.02)" />
+      <rect x={x + 28} y={y + 25} width={18} height={10} rx={1} fill="rgba(255,255,255,0.015)" />
+      <rect x={x + 10} y={y + 38} width={15} height={8} rx={1} fill="rgba(255,255,255,0.02)" />
+
+      {/* Top edge — golden accent line (only on topmost platform row) */}
+      {isTop && (
+        <>
+          <rect
+            x={x} y={y}
+            width={TILE_SIZE} height={2}
+            fill="var(--color-primary)"
+            opacity={0.5}
+          />
+          <rect
+            x={x} y={y + 2}
+            width={TILE_SIZE} height={3}
+            fill="rgba(232,185,74,0.1)"
+          />
+          {/* Small decorative notches */}
+          <rect x={x + 10} y={y - 1} width={2} height={3} rx={1} fill="rgba(232,185,74,0.3)" />
+          <rect x={x + 30} y={y - 2} width={2} height={4} rx={1} fill="rgba(232,185,74,0.25)" />
+          <rect x={x + 48} y={y - 1} width={2} height={3} rx={1} fill="rgba(232,185,74,0.2)" />
+        </>
+      )}
     </g>
   );
 }
 
-/* ===== Cloud decoration ===== */
-function Cloud({ x, y, scale = 1 }) {
+/* ═══════════════════════════
+   Ambient particles (dust)
+   ═══════════════════════════ */
+function AmbientParticle({ x, y, delay, size }) {
   return (
-    <motion.g
-      animate={{ x: [x, x + 30, x] }}
-      transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-    >
-      <g transform={`translate(${x}, ${y}) scale(${scale})`}>
-        <ellipse cx={0} cy={0} rx={30} ry={16} fill="rgba(255,255,255,0.08)" />
-        <ellipse cx={-20} cy={4} rx={20} ry={12} fill="rgba(255,255,255,0.06)" />
-        <ellipse cx={22} cy={5} rx={18} ry={10} fill="rgba(255,255,255,0.06)" />
-      </g>
-    </motion.g>
+    <motion.circle
+      cx={x} cy={y} r={size}
+      fill="rgba(232,185,74,0.15)"
+      animate={{
+        cy: [y, y - 40, y - 80],
+        opacity: [0, 0.3, 0],
+        cx: [x, x + 10, x + 5],
+      }}
+      transition={{
+        duration: 6 + Math.random() * 4,
+        delay,
+        repeat: Infinity,
+        ease: 'easeOut',
+      }}
+    />
   );
 }
 
-/* ===== Particle burst on star collection ===== */
+/* ═══════════════════════════════════════════
+   Particle burst on star collection
+   ═══════════════════════════════════════════ */
 function ParticleBurst({ x, y, active }) {
   if (!active) return null;
-  const particles = Array.from({ length: 12 }, (_, i) => {
-    const angle = (i / 12) * Math.PI * 2;
-    const dist = 40 + Math.random() * 30;
+  const particles = Array.from({ length: 16 }, (_, i) => {
+    const angle = (i / 16) * Math.PI * 2;
+    const dist = 35 + Math.random() * 35;
     return {
       tx: Math.cos(angle) * dist,
       ty: Math.sin(angle) * dist,
-      color: ['#ffd93d', '#ff6b9d', '#00d4ff', '#6bcb77', '#a855f7'][i % 5],
-      size: 4 + Math.random() * 4,
+      color: ['#e8b94a', '#f0d78c', '#c678dd', '#98c379', '#61afef', '#e06c75'][i % 6],
+      size: 3 + Math.random() * 5,
     };
   });
 
@@ -250,14 +293,16 @@ function ParticleBurst({ x, y, active }) {
             scale: 0,
             rotate: Math.random() * 360,
           }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
+          transition={{ duration: 0.9, ease: 'easeOut' }}
         />
       ))}
     </g>
   );
 }
 
-/* ===== Main GameWorld Component ===== */
+/* ═════════════════════════════════
+   Main GameWorld Component
+   ═════════════════════════════════ */
 export default function GameWorld({ stage, playerPos, executingLine, isRunning, starCollected, showParticles, isFailing }) {
   if (!stage) return null;
 
@@ -265,7 +310,6 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
   const width = GRID_COLS * TILE_SIZE;
   const height = GRID_ROWS * TILE_SIZE;
 
-  // Determine avatar facing direction from movement
   const direction = playerPos.col > (stage.playerStart?.col ?? 0) ? 'right' : 'left';
 
   return (
@@ -273,42 +317,63 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
       id="game-world"
       className="relative w-full h-full flex items-center justify-center overflow-hidden"
       style={{
-        background: `linear-gradient(180deg, var(--color-sky-top) 0%, var(--color-sky-bottom) 60%, #1a1a2e 100%)`,
+        background: `radial-gradient(ellipse at 50% 30%, var(--color-sky-mid) 0%, var(--color-sky-top) 50%, var(--color-bg-dark) 100%)`,
       }}
     >
-      {/* Background stars */}
+      {/* Background stars — dim, elegant */}
       <div className="absolute inset-0 pointer-events-none">
-        {Array.from({ length: 30 }, (_, i) => (
+        {Array.from({ length: 40 }, (_, i) => (
           <div
             key={i}
-            className="absolute rounded-full bg-white"
+            className="absolute rounded-full"
             style={{
-              width: Math.random() * 3 + 1,
-              height: Math.random() * 3 + 1,
+              width: Math.random() * 2 + 0.5,
+              height: Math.random() * 2 + 0.5,
               left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 60}%`,
-              opacity: Math.random() * 0.5 + 0.1,
-              animation: `blink ${3 + Math.random() * 4}s infinite ${Math.random() * 3}s`,
+              top: `${Math.random() * 55}%`,
+              opacity: Math.random() * 0.3 + 0.05,
+              background: i % 7 === 0 ? 'rgba(232,185,74,0.5)' : 'rgba(255,255,255,0.4)',
+              animation: `twinkle ${4 + Math.random() * 6}s infinite ${Math.random() * 4}s`,
             }}
           />
         ))}
       </div>
 
+      {/* Subtle radial glow behind the game area */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: '60%',
+          height: '60%',
+          top: '15%',
+          left: '20%',
+          background: 'radial-gradient(ellipse, rgba(232,185,74,0.03) 0%, transparent 70%)',
+        }}
+      />
+
       <svg
         viewBox={`-10 -20 ${width + 20} ${height + 30}`}
         className="max-w-full max-h-full"
-        style={{ filter: 'drop-shadow(0 0 40px rgba(0,0,0,0.3))' }}
+        style={{ filter: 'drop-shadow(0 0 50px rgba(0,0,0,0.4))' }}
       >
-        {/* Clouds */}
-        <Cloud x={50} y={30} scale={1.2} />
-        <Cloud x={300} y={15} scale={0.8} />
-        <Cloud x={520} y={40} scale={1} />
+        {/* Ambient floating particles */}
+        {Array.from({ length: 8 }, (_, i) => (
+          <AmbientParticle
+            key={i}
+            x={60 + i * 80}
+            y={height - 40}
+            delay={i * 1.5}
+            size={1 + Math.random()}
+          />
+        ))}
 
         {/* Grid tiles */}
         {grid.map((rowTiles, rowIdx) =>
           rowTiles.map((tile, colIdx) => {
             if (tile === TILE_PLATFORM) {
-              return <PlatformTile key={`${rowIdx}-${colIdx}`} col={colIdx} row={rowIdx} />;
+              // Determine if this is the topmost platform tile (air above)
+              const isTop = rowIdx === 0 || grid[rowIdx - 1]?.[colIdx] !== TILE_PLATFORM;
+              return <PlatformTile key={`${rowIdx}-${colIdx}`} col={colIdx} row={rowIdx} isTop={isTop} />;
             }
             if (tile === TILE_WALL) {
               return (
@@ -318,9 +383,9 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
                   y={rowIdx * TILE_SIZE}
                   width={TILE_SIZE}
                   height={TILE_SIZE}
-                  fill="#5a4a3a"
-                  stroke="#4a3a2a"
-                  strokeWidth={1}
+                  fill="#1a1e24"
+                  stroke="#12151a"
+                  strokeWidth={0.5}
                 />
               );
             }
@@ -347,34 +412,33 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
           direction={direction}
         />
 
-        {/* Executing line indicator */}
+        {/* Executing line badge */}
         {isRunning && executingLine > 0 && (
-          <motion.rect
-            x={playerPos.col * TILE_SIZE + 5}
-            y={playerPos.row * TILE_SIZE - 18}
-            width={50}
-            height={16}
-            rx={8}
-            fill="rgba(0, 212, 255, 0.9)"
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-          </motion.rect>
-        )}
-        {isRunning && executingLine > 0 && (
-          <motion.text
-            x={playerPos.col * TILE_SIZE + 30}
-            y={playerPos.row * TILE_SIZE - 7}
-            textAnchor="middle"
-            fill="#fff"
-            fontSize="10"
-            fontFamily="var(--font-code)"
-            fontWeight="bold"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            Line {executingLine}
-          </motion.text>
+          <>
+            <motion.rect
+              x={playerPos.col * TILE_SIZE + 7}
+              y={playerPos.row * TILE_SIZE - 16}
+              width={46}
+              height={14}
+              rx={7}
+              fill="rgba(232, 185, 74, 0.85)"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+            />
+            <motion.text
+              x={playerPos.col * TILE_SIZE + 30}
+              y={playerPos.row * TILE_SIZE - 6}
+              textAnchor="middle"
+              fill="#0a0a0f"
+              fontSize="9"
+              fontFamily="var(--font-code)"
+              fontWeight="bold"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              L{executingLine}
+            </motion.text>
+          </>
         )}
       </svg>
     </div>

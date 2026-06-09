@@ -205,16 +205,16 @@ export default function App() {
   }, [currentStageId]);
 
   return (
-    <div id="app-root" className="h-screen flex flex-col bg-[var(--color-bg-dark)]">
+    <div id="app-root" className="h-screen flex flex-col" style={{ background: 'var(--color-bg-dark)' }}>
       {/* Main content area */}
       <div className="flex flex-1 min-h-0">
         {/* Left: Game World (60%) */}
         <motion.div
           className="relative"
           style={{ width: '60%' }}
-          initial={{ opacity: 0, x: -30 }}
+          initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <StageHeader stage={stage} />
           <GameWorld
@@ -228,16 +228,15 @@ export default function App() {
           />
         </motion.div>
 
-        {/* Divider */}
-        <div className="w-px bg-white/5" />
+        {/* Gradient divider */}
+        <div className="divider-v" />
 
         {/* Right: Code Editor (40%) */}
         <motion.div
-          className="bg-[var(--color-bg-editor)]"
-          style={{ width: '40%' }}
-          initial={{ opacity: 0, x: 30 }}
+          style={{ width: '40%', background: 'var(--color-bg-editor)' }}
+          initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
         >
           <CodeEditor
             code={code}

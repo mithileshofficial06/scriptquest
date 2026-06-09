@@ -13,56 +13,63 @@ export default function ErrorOverlay({ error, stage, onRetry }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: 'rgba(10, 10, 30, 0.8)', backdropFilter: 'blur(6px)' }}
+          style={{ background: 'rgba(4, 4, 8, 0.85)', backdropFilter: 'blur(10px)' }}
         >
           <motion.div
-            initial={{ scale: 0.7, y: 30 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.7, y: 30 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            className="glass-panel rounded-3xl p-8 max-w-md w-full mx-4 border border-[var(--color-danger)]/30"
+            initial={{ scale: 0.8, y: 20, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.8, y: 20, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 16 }}
+            className="glass-panel rounded-3xl p-8 max-w-sm w-full mx-4"
             style={{
-              boxShadow: '0 0 40px rgba(255, 71, 87, 0.15)',
+              border: '1px solid rgba(224, 108, 117, 0.15)',
+              boxShadow: '0 0 40px rgba(224, 108, 117, 0.08)',
             }}
           >
-            {/* Emoji */}
+            {/* Icon */}
             <motion.div
-              className="text-5xl text-center mb-4"
-              animate={{ rotate: [0, -10, 10, -5, 0] }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-4xl text-center mb-4"
+              animate={{ rotate: [0, -8, 8, -4, 0] }}
+              transition={{ duration: 0.5, delay: 0.15 }}
             >
               😅
             </motion.div>
 
             {/* Title */}
-            <h2 className="text-xl font-black text-center text-[var(--color-danger)] mb-2">
+            <h2 className="text-lg font-black text-center mb-4" style={{ color: 'var(--color-danger)' }}>
               Oops!
             </h2>
 
-            {/* Error message */}
-            <div className="bg-black/20 rounded-xl p-4 mb-5">
-              <p className="text-sm text-white/60 mb-1" style={{ fontFamily: 'var(--font-code)' }}>
-                Line {error.line}:
+            {/* Error detail */}
+            <div
+              className="rounded-xl p-4 mb-5"
+              style={{
+                background: 'rgba(0, 0, 0, 0.2)',
+                border: '1px solid var(--color-border)',
+              }}
+            >
+              <p className="text-[11px] font-semibold mb-1.5" style={{ fontFamily: 'var(--font-code)', color: 'var(--color-text-dim)' }}>
+                Line {error.line}
               </p>
-              <p className="text-base text-white/90 font-semibold">
+              <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
                 {friendlyMessage}
               </p>
             </div>
 
             {/* Tip */}
-            <p className="text-xs text-center text-white/40 mb-5">
-              💡 Tip: Read through your commands and think about where the avatar is
-              after each step!
+            <p className="text-[11px] text-center mb-5" style={{ color: 'var(--color-text-dim)' }}>
+              💡 Read through your commands and think about where
+              the avatar is after each step.
             </p>
 
-            {/* Retry button */}
+            {/* Retry */}
             <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onRetry}
-              className="btn-secondary w-full text-base"
+              className="btn-primary w-full text-xs py-3"
             >
-              Try Again! 🔄
+              Try Again
             </motion.button>
           </motion.div>
         </motion.div>
