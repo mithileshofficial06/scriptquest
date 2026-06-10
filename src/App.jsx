@@ -9,6 +9,7 @@ import StageHeader from './components/StageHeader';
 import BugHuntOverlay from './components/BugHuntOverlay';
 import LevelEditor from './components/LevelEditor';
 import { stages } from './data/stages';
+import { solutions } from './data/solutions';
 import { parseLuaCode, simulateExecution, detectRepeatedPattern, refactorCodeWithFunction } from './engine/luaEngine';
 import { loadProgress, markStageComplete, saveCustomLevel, loadCustomLevel, clearCustomLevel, awardBadge } from './engine/storage';
 
@@ -18,7 +19,17 @@ const STEP_DELAY_MS = 500;
 export default function App() {
   // Game state
   const [progress, setProgress] = useState(() => loadProgress());
-  const [currentStageId, setCurrentStageId] = useState(1);
+  const [currentStageId, setCurrentStageId] = useState(() => {
+    const saved = localStorage.getItem('scriptquest_current_stage_id');
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (parsed >= 1 && parsed <= stages.length) {
+        return parsed;
+      }
+    }
+    const p = loadProgress();
+    return p.currentStage || 1;
+  });
   const stage = stages.find((s) => s.id === currentStageId);
 
   // Player state
@@ -91,25 +102,41 @@ export default function App() {
     return traps;
   }, []);
 
-  // Update active traps when level/bug changes
-  useEffect(() => {
-    randomizeTraps(activeStage);
-  }, [currentStageId, currentBugIndex, editorMode, activeStage, randomizeTraps]);
-
   // ═══════ Derived stage for active play ═══════
   // For bug hunt, we use the current bug's grid/positions.
   // For level editor in solve mode, we use the custom grid.
   const getActiveStage = useCallback(() => {
     if (!stage) return null;
 
+    const solInfo = solutions[stage.id] || {};
+    let finalHints = stage.hints || [];
+    if ((!finalHints || finalHints.length === 0) && solInfo.hints) {
+      finalHints = solInfo.hints;
+    }
+    const finalSolution = stage.solution || solInfo.solution || null;
+
     if (stage.mode === 'bugHunt' && stage.bugs?.[currentBugIndex]) {
       const bug = stage.bugs[currentBugIndex];
+      let bugHints = bug.hints || (solutions[stage.id]?.bugHints?.[bug.id]) || [];
+      let bugSolution = bug.solution || (solutions[stage.id]?.bugSolutions?.[bug.id]) || null;
+      
+      if ((!bugHints || bugHints.length === 0) && bug.hint) {
+        bugHints = [
+          "💡 Check the editor carefully for bugs. What happens when the avatar runs the script?",
+          "💡 Look at the lines highlighted in red or count the tiles where it goes wrong.",
+          `💡 ${bug.hint}`
+        ];
+      }
+
       return {
         ...stage,
+        ...bug,
         grid: bug.grid,
         playerStart: bug.playerStart,
         starPosition: bug.starPosition,
         hasRandomDoor: bug.hasRandomDoor || false,
+        hints: bugHints,
+        solution: bugSolution,
       };
     }
 
@@ -119,15 +146,26 @@ export default function App() {
         grid: customGrid,
         playerStart: customPlayerStart || stage.playerStart,
         starPosition: customStarPosition || stage.starPosition,
+        hints: finalHints,
+        solution: finalSolution,
       };
     }
 
-    return stage;
+    return {
+      ...stage,
+      hints: finalHints,
+      solution: finalSolution,
+    };
   }, [stage, currentBugIndex, editorMode, customGrid, customPlayerStart, customStarPosition]);
 
   const activeStage = getActiveStage();
 
   // ═══════ Effects ═══════
+
+  // Update active traps when level/bug changes
+  useEffect(() => {
+    randomizeTraps(activeStage);
+  }, [currentStageId, currentBugIndex, editorMode, randomizeTraps]);
 
   // Randomize door state on stage change
   useEffect(() => {
@@ -137,6 +175,11 @@ export default function App() {
       setDoorOpen(false);
     }
   }, [currentStageId, currentBugIndex]);
+
+  // Persist current level ID to localStorage
+  useEffect(() => {
+    localStorage.setItem('scriptquest_current_stage_id', currentStageId);
+  }, [currentStageId]);
 
   // Pattern detection for functions (Stage 5)
   useEffect(() => {
@@ -451,6 +494,26 @@ export default function App() {
     setShowCelebration(true);
   }, [currentStageId]);
 
+  const handleSelectStage = useCallback((stageId) => {
+    const targetStage = stages.find((s) => s.id === stageId);
+    if (targetStage) {
+      setCurrentStageId(stageId);
+      setPlayerPos({
+        col: targetStage.playerStart.col,
+        row: targetStage.playerStart.row,
+      });
+      setCode(targetStage.starterCode || '');
+      setShowCelebration(false);
+      setStarCollected(false);
+      setShowParticles(false);
+      setIsRunning(false);
+      setExecutingLine(-1);
+      setCodeError(null);
+      setShowError(null);
+      setCurrentBadge(null);
+    }
+  }, []);
+
   // ═══════ Level Editor handlers ═══════
   const handlePlayLevel = useCallback(() => {
     setEditorMode('solving');
@@ -518,29 +581,57 @@ export default function App() {
               initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
-              className="absolute top-5 left-5 z-10"
+              className="absolute top-5 left-5 z-10 flex flex-col gap-2"
             >
-              <div
-                className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-3"
-                style={{ border: '1px solid rgba(224, 108, 117, 0.3)' }}
-              >
+              <div className="flex items-center gap-2">
                 <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center text-lg"
-                  style={{
-                    background: 'rgba(224, 108, 117, 0.12)',
-                    border: '1.5px solid rgba(224, 108, 117, 0.3)',
-                  }}
+                  className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-3"
+                  style={{ border: '1px solid rgba(224, 108, 117, 0.3)' }}
                 >
-                  🐛
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center text-lg"
+                    style={{
+                      background: 'rgba(224, 108, 117, 0.12)',
+                      border: '1.5px solid rgba(224, 108, 117, 0.3)',
+                    }}
+                  >
+                    🐛
+                  </div>
+                  <div>
+                    <h1 className="text-sm font-extrabold tracking-tight leading-tight" style={{ color: 'var(--color-text)' }}>
+                      {currentBug.title}
+                    </h1>
+                    <p className="text-[11px] font-medium" style={{ color: 'var(--color-text-dim)' }}>
+                      {currentBug.description}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-sm font-extrabold tracking-tight leading-tight" style={{ color: 'var(--color-text)' }}>
-                    {currentBug.title}
-                  </h1>
-                  <p className="text-[11px] font-medium" style={{ color: 'var(--color-text-dim)' }}>
-                    {currentBug.description}
-                  </p>
-                </div>
+
+                {/* Prev button */}
+                {currentStageId > 1 && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleSelectStage(currentStageId - 1)}
+                    className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-sm glass-panel border border-[#e8b94a]/30 text-[#e8b94a] hover:bg-[#e8b94a]/10 transition-all cursor-pointer"
+                    title="Previous Stage"
+                  >
+                    ◀
+                  </motion.button>
+                )}
+
+                {/* Next button */}
+                {currentStageId < stages.length && (progress.completedStages.includes(currentStageId) || progress.completedStages.includes(currentStageId + 1) || currentStageId < progress.currentStage) && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleSelectStage(currentStageId + 1)}
+                    className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-sm glass-panel border border-[#e8b94a]/30 text-[#e8b94a] hover:bg-[#e8b94a]/10 transition-all cursor-pointer"
+                    title="Next Stage"
+                  >
+                    ▶
+                  </motion.button>
+                )}
               </div>
 
               {/* Hint — shown after first failure */}
@@ -602,7 +693,13 @@ export default function App() {
               </div>
             </motion.div>
           ) : !showLevelEditor ? (
-            <StageHeader stage={stage} />
+            <StageHeader
+              stage={activeStage}
+              hasPrev={currentStageId > 1}
+              hasNext={currentStageId < stages.length && (progress.completedStages.includes(currentStageId) || progress.completedStages.includes(currentStageId + 1) || currentStageId < progress.currentStage)}
+              onPrevStage={() => handleSelectStage(currentStageId - 1)}
+              onNextStage={() => handleSelectStage(currentStageId + 1)}
+            />
           ) : null}
 
           {/* Render game world or level editor */}
@@ -660,7 +757,12 @@ export default function App() {
             onRefactor={handleRefactor}
             hints={activeStage?.hints}
             hintsUsed={hintsUsed}
-            onUseHint={() => setHintsUsed((prev) => Math.min(prev + 1, activeStage?.hints?.length || 3))}
+            onUseHint={() => setHintsUsed((prev) => {
+              const hintsCount = activeStage?.hints?.length || 0;
+              const hasSol = activeStage?.solution ? 1 : 0;
+              return Math.min(prev + 1, hintsCount + hasSol);
+            })}
+            solution={activeStage?.solution}
           />
         </motion.div>
       </div>
@@ -669,25 +771,7 @@ export default function App() {
       <ProgressBar
         currentStageId={currentStageId}
         completedStages={progress.completedStages}
-        onSelectStage={(stageId) => {
-          const targetStage = stages.find((s) => s.id === stageId);
-          if (targetStage) {
-            setCurrentStageId(stageId);
-            setPlayerPos({
-              col: targetStage.playerStart.col,
-              row: targetStage.playerStart.row,
-            });
-            setCode(targetStage.starterCode || '');
-            setShowCelebration(false);
-            setStarCollected(false);
-            setShowParticles(false);
-            setIsRunning(false);
-            setExecutingLine(-1);
-            setCodeError(null);
-            setShowError(null);
-            setCurrentBadge(null);
-          }
-        }}
+        onSelectStage={handleSelectStage}
       />
 
       {/* Overlays */}

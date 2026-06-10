@@ -58,6 +58,7 @@ export default function CodeEditor({
   hints,
   hintsUsed,
   onUseHint,
+  solution,
 }) {
   const editorRef = useRef(null);
   const viewRef = useRef(null);
@@ -304,11 +305,11 @@ export default function CodeEditor({
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-sm">💡</span>
                 <span className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--color-primary)' }}>
-                  Hint {hintsUsed} of {hints.length}
+                  {hintsUsed > hints.length ? 'Solution Answer' : `Hint ${hintsUsed} of ${hints.length}`}
                 </span>
               </div>
               <div className="space-y-2">
-                {hints.slice(0, hintsUsed).map((hint, i) => (
+                {hints.slice(0, Math.min(hintsUsed, hints.length)).map((hint, i) => (
                   <motion.p
                     key={i}
                     initial={{ opacity: 0, x: -8 }}
@@ -316,14 +317,36 @@ export default function CodeEditor({
                     transition={{ delay: i * 0.1 }}
                     className="text-xs leading-relaxed whitespace-pre-line"
                     style={{
-                      color: i === hintsUsed - 1 ? 'var(--color-text)' : 'var(--color-text-dim)',
+                      color: (hintsUsed > hints.length ? i === hints.length - 1 : i === hintsUsed - 1) ? 'var(--color-text)' : 'var(--color-text-dim)',
                       paddingLeft: '8px',
-                      borderLeft: `2px solid ${i === hintsUsed - 1 ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                      borderLeft: `2px solid ${(hintsUsed > hints.length ? i === hints.length - 1 : i === hintsUsed - 1) ? 'var(--color-primary)' : 'var(--color-border)'}`,
                     }}
                   >
                     {hint}
                   </motion.p>
                 ))}
+
+                {hintsUsed > hints.length && solution && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-3 p-3 rounded-lg border border-dashed border-[#e8b94a]/30 bg-[#e8b94a]/5"
+                  >
+                    <p className="text-xs font-bold text-yellow-400 mb-1">🔑 Exact Solution Code:</p>
+                    <pre
+                      onClick={() => {
+                        navigator.clipboard.writeText(solution);
+                        alert('Solution code copied to clipboard!');
+                      }}
+                      className="text-[10px] leading-relaxed font-mono text-[#e2e0e8] bg-[#0d0f14]/80 p-2.5 rounded border border-gray-800 overflow-x-auto select-all cursor-pointer hover:bg-[#0d0f14] transition-all"
+                      title="Click to copy code"
+                      style={{ whiteSpace: 'pre' }}
+                    >
+                      {solution}
+                    </pre>
+                    <p className="text-[9px] text-gray-400 mt-1">🖱️ Click on the code box to copy it!</p>
+                  </motion.div>
+                )}
               </div>
             </div>
           </motion.div>
@@ -356,47 +379,59 @@ export default function CodeEditor({
       {/* Run Button + Hint Button */}
       <div className="p-4 flex gap-2" style={{ borderTop: '1px solid var(--color-border)' }}>
         {/* Hint Button */}
-        {hints && hints.length > 0 && (
-          <motion.button
-            id="hint-button"
-            whileHover={{ scale: hintsUsed >= hints.length ? 1 : 1.05 }}
-            whileTap={{ scale: hintsUsed >= hints.length ? 1 : 0.95 }}
-            onClick={onUseHint}
-            disabled={hintsUsed >= hints.length || isRunning}
-            className="relative flex items-center justify-center gap-1.5 px-4 rounded-xl text-xs font-bold transition-all duration-200"
-            style={{
-              background: hintsUsed >= hints.length
-                ? 'var(--color-surface)'
-                : 'rgba(232, 185, 74, 0.06)',
-              border: `1.5px solid ${
-                hintsUsed >= hints.length
-                  ? 'var(--color-border)'
-                  : 'var(--color-border-accent)'
-              }`,
-              color: hintsUsed >= hints.length
-                ? 'var(--color-text-dim)'
-                : 'var(--color-primary)',
-              opacity: hintsUsed >= hints.length ? 0.5 : 1,
-              cursor: hintsUsed >= hints.length ? 'not-allowed' : 'pointer',
-              minWidth: '80px',
-            }}
-            animate={hintsUsed < hints.length && !isRunning ? {
-              boxShadow: [
-                '0 0 0 0 rgba(232, 185, 74, 0)',
-                '0 0 12px rgba(232, 185, 74, 0.25)',
-                '0 0 0 0 rgba(232, 185, 74, 0)'
-              ]
-            } : { boxShadow: 'none' }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut'
-            }}
-          >
-            <span className="text-base">💡</span>
-            <span>{hints.length - hintsUsed}</span>
-          </motion.button>
-        )}
+        {hints && (hints.length > 0 || solution) && (() => {
+          const maxHints = hints.length + (solution ? 1 : 0);
+          const isExhausted = hintsUsed >= maxHints;
+          const isReadyForSolution = hintsUsed === hints.length && solution;
+          
+          return (
+            <motion.button
+              id="hint-button"
+              whileHover={{ scale: isExhausted ? 1 : 1.05 }}
+              whileTap={{ scale: isExhausted ? 1 : 0.95 }}
+              onClick={onUseHint}
+              disabled={isExhausted || isRunning}
+              className="relative flex items-center justify-center gap-1.5 px-4 rounded-xl text-xs font-bold transition-all duration-200"
+              style={{
+                background: isExhausted
+                  ? 'var(--color-surface)'
+                  : isReadyForSolution
+                    ? 'rgba(232, 185, 74, 0.12)'
+                    : 'rgba(232, 185, 74, 0.06)',
+                border: `1.5px solid ${
+                  isExhausted
+                    ? 'var(--color-border)'
+                    : isReadyForSolution
+                      ? 'var(--color-primary)'
+                      : 'var(--color-border-accent)'
+                }`,
+                color: isExhausted
+                  ? 'var(--color-text-dim)'
+                  : 'var(--color-primary)',
+                opacity: isExhausted ? 0.5 : 1,
+                cursor: isExhausted ? 'not-allowed' : 'pointer',
+                minWidth: '85px',
+              }}
+              animate={!isExhausted && !isRunning ? {
+                boxShadow: [
+                  '0 0 0 0 rgba(232, 185, 74, 0)',
+                  isReadyForSolution ? '0 0 16px rgba(232, 185, 74, 0.4)' : '0 0 12px rgba(232, 185, 74, 0.25)',
+                  '0 0 0 0 rgba(232, 185, 74, 0)'
+                ]
+              } : { boxShadow: 'none' }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut'
+              }}
+            >
+              <span className="text-base">{isReadyForSolution ? '🔑' : '💡'}</span>
+              <span>
+                {isReadyForSolution ? 'Solution' : isExhausted ? '0' : (hints.length - hintsUsed)}
+              </span>
+            </motion.button>
+          );
+        })()}
 
         {/* Run button */}
         <motion.button
