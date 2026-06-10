@@ -39,7 +39,12 @@ export default function App() {
   });
 
   // Code state
-  const [code, setCode] = useState(stage?.starterCode ?? '');
+  const [code, setCode] = useState(() => {
+    const s = stages.find((st) => st.id === currentStageId);
+    if (!s) return '';
+    const solInfo = solutions[s.id] || {};
+    return solInfo.starterCode || s.starterCode || '';
+  });
 
   // Execution state
   const [isRunning, setIsRunning] = useState(false);
@@ -114,6 +119,7 @@ export default function App() {
       finalHints = solInfo.hints;
     }
     const finalSolution = stage.solution || solInfo.solution || null;
+    const finalDescription = solInfo.description || stage.description || '';
 
     if (stage.mode === 'bugHunt' && stage.bugs?.[currentBugIndex]) {
       const bug = stage.bugs[currentBugIndex];
@@ -137,6 +143,7 @@ export default function App() {
         hasRandomDoor: bug.hasRandomDoor || false,
         hints: bugHints,
         solution: bugSolution,
+        description: bug.description || finalDescription,
       };
     }
 
@@ -148,6 +155,7 @@ export default function App() {
         starPosition: customStarPosition || stage.starPosition,
         hints: finalHints,
         solution: finalSolution,
+        description: finalDescription,
       };
     }
 
@@ -155,6 +163,7 @@ export default function App() {
       ...stage,
       hints: finalHints,
       solution: finalSolution,
+      description: finalDescription,
     };
   }, [stage, currentBugIndex, editorMode, customGrid, customPlayerStart, customStarPosition]);
 
@@ -198,7 +207,8 @@ export default function App() {
       setCustomGrid(saved.grid);
       setCustomPlayerStart(saved.playerStart);
       setCustomStarPosition(saved.starPosition);
-      setCode(saved.code || stage?.starterCode || '');
+      const solInfo = solutions[7] || {};
+      setCode(saved.code || solInfo.starterCode || stage?.starterCode || '');
       setEditorMode('editing');
     }
   }, [currentStageId]);
@@ -445,7 +455,8 @@ export default function App() {
         col: nextStage.playerStart.col,
         row: nextStage.playerStart.row,
       });
-      setCode(nextStage.starterCode);
+      const solInfo = solutions[nextStageId] || {};
+      setCode(solInfo.starterCode || nextStage.starterCode || '');
       setShowCelebration(false);
       setStarCollected(false);
       setShowParticles(false);
@@ -502,7 +513,8 @@ export default function App() {
         col: targetStage.playerStart.col,
         row: targetStage.playerStart.row,
       });
-      setCode(targetStage.starterCode || '');
+      const solInfo = solutions[stageId] || {};
+      setCode(solInfo.starterCode || targetStage.starterCode || '');
       setShowCelebration(false);
       setStarCollected(false);
       setShowParticles(false);

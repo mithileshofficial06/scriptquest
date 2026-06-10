@@ -491,13 +491,12 @@ function DoorTile({ col, row, isOpen }) {
    ═══════════════════════════ */
 function AmbientParticle({ x, y, delay, size }) {
   return (
-    <motion.circle
-      cx={x} cy={y} r={size}
-      fill="rgba(232,185,74,0.15)"
+    <motion.g
+      initial={{ x, y, opacity: 0 }}
       animate={{
-        cy: [y, y - 40, y - 80],
+        y: [y, y - 40, y - 80],
+        x: [x, x + 10, x + 5],
         opacity: [0, 0.3, 0],
-        cx: [x, x + 10, x + 5],
       }}
       transition={{
         duration: 6 + Math.random() * 4,
@@ -505,7 +504,9 @@ function AmbientParticle({ x, y, delay, size }) {
         repeat: Infinity,
         ease: 'easeOut',
       }}
-    />
+    >
+      <circle cx={0} cy={0} r={size} fill="rgba(232,185,74,0.15)" />
+    </motion.g>
   );
 }
 
