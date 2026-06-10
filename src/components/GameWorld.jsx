@@ -1,13 +1,46 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { TILE_SIZE, TILE_PLATFORM, TILE_WALL, TILE_DOOR, GRID_COLS, GRID_ROWS } from '../data/stages';
 
 /* ═══════════════════════════════════════════════════
    Premium SVG Avatar — refined Roblox-style character
    ═══════════════════════════════════════════════════ */
-function Avatar({ col, row, isJumping, isFailing, direction, isRunning }) {
+function Avatar({ col, row, isJumping, isFailing, direction, isRunning, selectedSkin = 'default' }) {
   const x = col * TILE_SIZE;
   const y = row * TILE_SIZE;
+
+  // Dynamic colors and styling based on skin
+  let bodyFill = "url(#bodyGrad)";
+  let headFill = "url(#headGrad)";
+  let armColor = "#d4a23a";
+  let armStroke = "#b8862a";
+  let shoeFill = "#1a1a28";
+
+  if (selectedSkin === 'cyber') {
+    bodyFill = "url(#cyberBodyGrad)";
+    headFill = "url(#cyberHeadGrad)";
+    armColor = "#1f2937";
+    armStroke = "#00f2fe";
+    shoeFill = "#111827";
+  } else if (selectedSkin === 'ninja') {
+    bodyFill = "url(#ninjaBodyGrad)";
+    headFill = "url(#ninjaHeadGrad)";
+    armColor = "#7f1d1d";
+    armStroke = "#111827";
+    shoeFill = "#111827";
+  } else if (selectedSkin === 'alien') {
+    bodyFill = "url(#alienBodyGrad)";
+    headFill = "url(#alienHeadGrad)";
+    armColor = "#581c87";
+    armStroke = "#4ade80";
+    shoeFill = "#581c87";
+  } else if (selectedSkin === 'gold') {
+    bodyFill = "url(#goldBodyGrad)";
+    headFill = "url(#goldHeadGrad)";
+    armColor = "#d97706";
+    armStroke = "#92400e";
+    shoeFill = "#d97706";
+  }
 
   return (
     <motion.g
@@ -34,6 +67,7 @@ function Avatar({ col, row, isJumping, isFailing, direction, isRunning }) {
 
       {/* Body — gradient fill */}
       <defs>
+        {/* Default Gradients */}
         <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="#e8b94a" />
           <stop offset="100%" stopColor="#c99630" />
@@ -45,6 +79,46 @@ function Avatar({ col, row, isJumping, isFailing, direction, isRunning }) {
         <linearGradient id="legGrad" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="#2a2a3a" />
           <stop offset="100%" stopColor="#1a1a28" />
+        </linearGradient>
+
+        {/* Cyber Gradients */}
+        <linearGradient id="cyberBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#1f2937" />
+          <stop offset="100%" stopColor="#111827" />
+        </linearGradient>
+        <linearGradient id="cyberHeadGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#374151" />
+          <stop offset="100%" stopColor="#1f2937" />
+        </linearGradient>
+
+        {/* Ninja Gradients */}
+        <linearGradient id="ninjaBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#991b1b" />
+          <stop offset="100%" stopColor="#7f1d1d" />
+        </linearGradient>
+        <linearGradient id="ninjaHeadGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#b91c1c" />
+          <stop offset="100%" stopColor="#991b1b" />
+        </linearGradient>
+
+        {/* Alien Gradients */}
+        <linearGradient id="alienBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#7e22ce" />
+          <stop offset="100%" stopColor="#581c87" />
+        </linearGradient>
+        <linearGradient id="alienHeadGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#4ade80" />
+          <stop offset="100%" stopColor="#22c55e" />
+        </linearGradient>
+
+        {/* Gold Gradients */}
+        <linearGradient id="goldBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#fbbf24" />
+          <stop offset="100%" stopColor="#d97706" />
+        </linearGradient>
+        <linearGradient id="goldHeadGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#fef08a" />
+          <stop offset="100%" stopColor="#eab308" />
         </linearGradient>
       </defs>
 
@@ -62,77 +136,110 @@ function Avatar({ col, row, isJumping, isFailing, direction, isRunning }) {
         {/* Torso/Body */}
         <rect
           x={15} y={18} width={30} height={28} rx={4}
-          fill="url(#bodyGrad)"
-          stroke="#b8862a"
-          strokeWidth={1.5}
+          fill={bodyFill}
+          stroke={selectedSkin === 'cyber' ? "#00f2fe" : selectedSkin === 'gold' ? "#92400e" : "#b8862a"}
+          strokeWidth={selectedSkin === 'cyber' ? 2 : 1.5}
         />
         {/* Body shine */}
-        <rect
-          x={17} y={20} width={8} height={12} rx={2}
-          fill="rgba(255,255,255,0.15)"
-        />
+        {selectedSkin !== 'cyber' && (
+          <rect
+            x={17} y={20} width={8} height={12} rx={2}
+            fill="rgba(255,255,255,0.15)"
+          />
+        )}
+        {selectedSkin === 'cyber' && (
+          // Cyber circuitry overlay on chest
+          <>
+            <line x1={20} y1={25} x2={40} y2={25} stroke="rgba(0, 242, 254, 0.4)" strokeWidth={1} />
+            <line x1={30} y1={25} x2={30} y2={38} stroke="rgba(0, 242, 254, 0.4)" strokeWidth={1} />
+            <circle cx={30} cy={32} r={2} fill="#00f2fe" />
+          </>
+        )}
 
         {/* Head */}
         <rect
           x={12} y={2} width={36} height={20} rx={4}
-          fill="url(#headGrad)"
-          stroke="#c9b88a"
-          strokeWidth={1.5}
+          fill={headFill}
+          stroke={selectedSkin === 'cyber' ? "#00f2fe" : selectedSkin === 'gold' ? "#92400e" : "#c9b88a"}
+          strokeWidth={selectedSkin === 'cyber' ? 2 : 1.5}
         />
 
-        {/* Eyes — darker, more expressive */}
-        <rect
-          x={direction === 'left' ? 17 : 21}
-          y={8} width={7} height={8} rx={2}
-          fill="#1a1a28"
-        >
-          <animate
-            attributeName="height"
-            values="8;2;8"
-            dur="3.5s"
-            repeatCount="indefinite"
-            begin="1.5s"
-          />
-        </rect>
-        <rect
-          x={direction === 'left' ? 30 : 34}
-          y={8} width={7} height={8} rx={2}
-          fill="#1a1a28"
-        >
-          <animate
-            attributeName="height"
-            values="8;2;8"
-            dur="3.5s"
-            repeatCount="indefinite"
-            begin="1.5s"
-          />
-        </rect>
-        {/* Eye highlights */}
-        <rect
-          x={direction === 'left' ? 19 : 23}
-          y={9} width={2} height={2} rx={1}
-          fill="rgba(255,255,255,0.7)"
-        />
-        <rect
-          x={direction === 'left' ? 32 : 36}
-          y={9} width={2} height={2} rx={1}
-          fill="rgba(255,255,255,0.7)"
-        />
+        {/* Face Elements depending on Skin */}
+        {selectedSkin === 'default' && (
+          <>
+            {/* Eyes */}
+            <rect x={direction === 'left' ? 17 : 21} y={8} width={7} height={8} rx={2} fill="#1a1a28" />
+            <rect x={direction === 'left' ? 30 : 34} y={8} width={7} height={8} rx={2} fill="#1a1a28" />
+            {/* Eye highlights */}
+            <rect x={direction === 'left' ? 19 : 23} y={9} width={2} height={2} rx={1} fill="rgba(255,255,255,0.7)" />
+            <rect x={direction === 'left' ? 32 : 36} y={9} width={2} height={2} rx={1} fill="rgba(255,255,255,0.7)" />
+            {/* Mouth */}
+            <path d={`M 23 16 Q 30 21 37 16`} fill="none" stroke="#8a7a6a" strokeWidth={1.5} strokeLinecap="round" />
+          </>
+        )}
 
-        {/* Mouth */}
-        <path
-          d={`M ${23} ${16} Q ${30} ${21} ${37} ${16}`}
-          fill="none"
-          stroke="#8a7a6a"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-        />
+        {selectedSkin === 'cyber' && (
+          <>
+            {/* Cyan glowing visor */}
+            <rect
+              x={14} y={6} width={32} height={7} rx={1.5}
+              fill="#00f2fe"
+              style={{ filter: 'drop-shadow(0 0 5px rgba(0, 242, 254, 0.8))' }}
+            />
+            {/* Visor scanline */}
+            <line x1={15} y1={9} x2={45} y2={9} stroke="#ffffff" strokeWidth={1} opacity={0.7} />
+          </>
+        )}
+
+        {selectedSkin === 'ninja' && (
+          <>
+            {/* Headband wrap */}
+            <rect x={12} y={3} width={36} height={5} fill="#111827" />
+            {/* White slit eyes */}
+            <rect x={direction === 'left' ? 18 : 22} y={10} width={6} height={3} rx={1} fill="#ffffff" />
+            <rect x={direction === 'left' ? 30 : 34} y={10} width={6} height={3} rx={1} fill="#ffffff" />
+            {/* Red headband tails behind the head */}
+            <path d="M 12 5 Q 6 8 8 13" fill="none" stroke="#7f1d1d" strokeWidth={2.5} />
+            <path d="M 12 5 Q 4 10 5 15" fill="none" stroke="#7f1d1d" strokeWidth={2} />
+          </>
+        )}
+
+        {selectedSkin === 'alien' && (
+          <>
+            {/* Cyclops large center eye */}
+            <circle cx={30} cy={9} r={5} fill="#ffffff" stroke="#1f2937" strokeWidth={1} />
+            <circle cx={30} cy={9} r={2} fill="#7e22ce" />
+            {/* Alien small cute smile */}
+            <path d="M 27 15 Q 30 17 33 15" fill="none" stroke="#1f2937" strokeWidth={1.2} strokeLinecap="round" />
+          </>
+        )}
+
+        {selectedSkin === 'gold' && (
+          <>
+            {/* Gold Crown */}
+            <path
+              d="M 15 2 L 18 -4 L 24 0 L 30 -5 L 36 0 L 42 -4 L 45 2 Z"
+              fill="#fbbf24"
+              stroke="#d97706"
+              strokeWidth={1}
+            />
+            {/* Pixel Shades */}
+            <path
+              d="M 15 7 H 45 V 11 H 42 V 13 H 38 V 11 H 37 V 9 H 33 V 11 H 32 V 13 H 28 V 11 H 27 V 9 H 23 V 11 H 22 V 13 H 18 V 11 H 15 Z"
+              fill="#111827"
+              stroke="#000000"
+              strokeWidth={0.5}
+            />
+            {/* Shiny gold smile */}
+            <path d="M 24 16 Q 30 19 36 16" fill="none" stroke="#92400e" strokeWidth={1.8} strokeLinecap="round" />
+          </>
+        )}
 
         {/* Left Arm */}
         <motion.rect
           x={6} y={22} width={9} height={6} rx={3}
-          fill="#d4a23a"
-          stroke="#b8862a"
+          fill={armColor}
+          stroke={armStroke}
           strokeWidth={1}
           animate={isRunning && !isFailing ? {
             rotate: [15, -15, 15],
@@ -148,8 +255,8 @@ function Avatar({ col, row, isJumping, isFailing, direction, isRunning }) {
         {/* Right Arm */}
         <motion.rect
           x={45} y={22} width={9} height={6} rx={3}
-          fill="#d4a23a"
-          stroke="#b8862a"
+          fill={armColor}
+          stroke={armStroke}
           strokeWidth={1}
           animate={isRunning && !isFailing ? {
             rotate: [-15, 15, -15],
@@ -176,7 +283,7 @@ function Avatar({ col, row, isJumping, isFailing, direction, isRunning }) {
         style={{ transformOrigin: '23px 46px' }}
       >
         <rect x={18} y={46} width={10} height={10} rx={3} fill="url(#legGrad)" />
-        <rect x={16} y={54} width={14} height={4} rx={2} fill="#1a1a28" stroke="#2a2a3a" strokeWidth={0.5} />
+        <rect x={16} y={54} width={14} height={4} rx={2} fill={shoeFill} stroke={selectedSkin === 'cyber' ? "#00f2fe" : "#2a2a3a"} strokeWidth={0.5} />
       </motion.g>
 
       {/* Right Leg and Shoe */}
@@ -192,7 +299,7 @@ function Avatar({ col, row, isJumping, isFailing, direction, isRunning }) {
         style={{ transformOrigin: '37px 46px' }}
       >
         <rect x={32} y={46} width={10} height={10} rx={3} fill="url(#legGrad)" />
-        <rect x={30} y={54} width={14} height={4} rx={2} fill="#1a1a28" stroke="#2a2a3a" strokeWidth={0.5} />
+        <rect x={30} y={54} width={14} height={4} rx={2} fill={shoeFill} stroke={selectedSkin === 'cyber' ? "#00f2fe" : "#2a2a3a"} strokeWidth={0.5} />
       </motion.g>
     </motion.g>
   );
@@ -555,8 +662,46 @@ function ParticleBurst({ x, y, active }) {
 /* ═════════════════════════════════
    Main GameWorld Component
    ═════════════════════════════════ */
-export default function GameWorld({ stage, playerPos, executingLine, isRunning, starCollected, showParticles, isFailing, doorOpen, activeTraps }) {
+export default function GameWorld({ stage, playerPos, executingLine, isRunning, starCollected, showParticles, isFailing, doorOpen, activeTraps, selectedSkin = 'default' }) {
   if (!stage) return null;
+
+  const [trail, setTrail] = useState([]);
+  const [shockwave, setShockwave] = useState(null);
+  const prevPos = useRef(playerPos);
+
+  // Track coordinates for the footprints trail
+  useEffect(() => {
+    if (!isRunning) {
+      setTrail([]);
+      return;
+    }
+
+    setTrail((prev) => {
+      // Avoid pushing duplicates if the player hasn't moved
+      const last = prev[prev.length - 1];
+      if (last && last.col === playerPos.col && last.row === playerPos.row) {
+        return prev;
+      }
+      const newTrail = [...prev, { col: playerPos.col, row: playerPos.row, id: Math.random() }];
+      if (newTrail.length > 4) {
+        newTrail.shift();
+      }
+      return newTrail;
+    });
+  }, [playerPos, isRunning]);
+
+  // Detect jumps to trigger expanding shockwave circles
+  useEffect(() => {
+    if (playerPos.row !== prevPos.current.row && isRunning) {
+      // Row changed -> jump or fall event!
+      setShockwave({
+        col: prevPos.current.col,
+        row: prevPos.current.row,
+        id: Math.random()
+      });
+    }
+    prevPos.current = playerPos;
+  }, [playerPos, isRunning]);
 
   const { grid, starPosition, hasTraps, trapPositions } = stage;
   const width = GRID_COLS * TILE_SIZE;
@@ -708,6 +853,57 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
           />
         ))}
 
+        {/* Footprints trail */}
+        {trail.map((t, idx) => {
+          const opacity = (idx + 1) / (trail.length + 1) * 0.45;
+          const size = 6 + idx * 1.5;
+          
+          let trailColor = '#e8b94a';
+          if (selectedSkin === 'cyber') trailColor = '#00f2fe';
+          if (selectedSkin === 'ninja') trailColor = '#e06c75';
+          if (selectedSkin === 'alien') trailColor = '#98c379';
+          if (selectedSkin === 'gold') trailColor = '#ffd700';
+
+          return (
+            <circle
+              key={t.id || idx}
+              cx={t.col * TILE_SIZE + TILE_SIZE / 2}
+              cy={t.row * TILE_SIZE + TILE_SIZE / 2 + 10}
+              r={size}
+              fill={trailColor}
+              opacity={opacity}
+              style={{ filter: `blur(1px) drop-shadow(0 0 5px ${trailColor})` }}
+            />
+          );
+        })}
+
+        {/* Jump Shockwave circle */}
+        {shockwave && (
+          <motion.circle
+            key={shockwave.id}
+            cx={shockwave.col * TILE_SIZE + TILE_SIZE / 2}
+            cy={shockwave.row * TILE_SIZE + TILE_SIZE - 2}
+            r={10}
+            fill="none"
+            stroke={
+              selectedSkin === 'cyber'
+                ? '#00f2fe'
+                : selectedSkin === 'ninja'
+                ? '#e06c75'
+                : selectedSkin === 'alien'
+                ? '#98c379'
+                : selectedSkin === 'gold'
+                ? '#ffd700'
+                : '#e8b94a'
+            }
+            strokeWidth={3}
+            initial={{ r: 8, opacity: 0.8 }}
+            animate={{ r: 42, opacity: 0 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+            style={{ filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.2))' }}
+          />
+        )}
+
         {/* Star */}
         <Star col={starPosition.col} row={starPosition.row} collected={starCollected} />
 
@@ -726,6 +922,7 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
           isFailing={isFailing}
           direction={direction}
           isRunning={isRunning}
+          selectedSkin={selectedSkin}
         />
 
         {/* Executing line badge */}

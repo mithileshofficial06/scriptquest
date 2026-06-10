@@ -59,6 +59,8 @@ export default function CodeEditor({
   hintsUsed,
   onUseHint,
   solution,
+  execSpeed,
+  onSpeedChange,
 }) {
   const editorRef = useRef(null);
   const viewRef = useRef(null);
@@ -377,98 +379,130 @@ export default function CodeEditor({
       )}
 
       {/* Run Button + Hint Button */}
-      <div className="p-4 flex gap-2" style={{ borderTop: '1px solid var(--color-border)' }}>
-        {/* Hint Button */}
-        {hints && (hints.length > 0 || solution) && (() => {
-          const maxHints = hints.length + (solution ? 1 : 0);
-          const isExhausted = hintsUsed >= maxHints;
-          const isReadyForSolution = hintsUsed === hints.length && solution;
-          
-          return (
-            <motion.button
-              id="hint-button"
-              whileHover={{ scale: isExhausted ? 1 : 1.05 }}
-              whileTap={{ scale: isExhausted ? 1 : 0.95 }}
-              onClick={onUseHint}
-              disabled={isExhausted || isRunning}
-              className="relative flex items-center justify-center gap-1.5 px-4 rounded-xl text-xs font-bold transition-all duration-200"
-              style={{
-                background: isExhausted
-                  ? 'var(--color-surface)'
-                  : isReadyForSolution
-                    ? 'rgba(232, 185, 74, 0.12)'
-                    : 'rgba(232, 185, 74, 0.06)',
-                border: `1.5px solid ${
-                  isExhausted
-                    ? 'var(--color-border)'
-                    : isReadyForSolution
-                      ? 'var(--color-primary)'
-                      : 'var(--color-border-accent)'
-                }`,
-                color: isExhausted
-                  ? 'var(--color-text-dim)'
-                  : 'var(--color-primary)',
-                opacity: isExhausted ? 0.5 : 1,
-                cursor: isExhausted ? 'not-allowed' : 'pointer',
-                minWidth: '85px',
-              }}
-              animate={!isExhausted && !isRunning ? {
-                boxShadow: [
-                  '0 0 0 0 rgba(232, 185, 74, 0)',
-                  isReadyForSolution ? '0 0 16px rgba(232, 185, 74, 0.4)' : '0 0 12px rgba(232, 185, 74, 0.25)',
-                  '0 0 0 0 rgba(232, 185, 74, 0)'
-                ]
-              } : { boxShadow: 'none' }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: 'easeInOut'
-              }}
-            >
-              <span className="text-base">{isReadyForSolution ? '🔑' : '💡'}</span>
-              <span>
-                {isReadyForSolution ? 'Solution' : isExhausted ? '0' : (hints.length - hintsUsed)}
-              </span>
-            </motion.button>
-          );
-        })()}
+      <div className="p-4 flex flex-col gap-3" style={{ borderTop: '1px solid var(--color-border)' }}>
+        {/* Speed Slider */}
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--color-text-dim)' }}>
+              Speed:
+            </span>
+            <span className="text-xs font-bold" style={{ color: 'var(--color-primary)' }}>
+              {execSpeed === 800 ? '🐌 Slow' : execSpeed === 450 ? '🚶 Normal' : execSpeed === 200 ? '⚡ Fast' : '🚀 Turbo'}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="3"
+            step="1"
+            value={execSpeed === 800 ? 0 : execSpeed === 450 ? 1 : execSpeed === 200 ? 2 : 3}
+            onChange={(e) => {
+              const val = parseInt(e.target.value, 10);
+              const speeds = [800, 450, 200, 60];
+              onSpeedChange(speeds[val]);
+              playClick();
+            }}
+            disabled={isRunning}
+            className="w-28 accent-[#e8b94a] cursor-pointer h-1.5 rounded-lg appearance-none bg-[#111218]"
+            style={{
+              outline: 'none',
+            }}
+          />
+        </div>
 
-        {/* Run button */}
-        <motion.button
-          id="run-button"
-          whileHover={{ scale: isRunning ? 1 : 1.015 }}
-          whileTap={{ scale: isRunning ? 1 : 0.985 }}
-          onClick={onRun}
-          disabled={isRunning}
-          className="btn-primary shimmer-btn flex-1 text-sm flex items-center justify-center gap-3"
-          style={{
-            ...(isRunning ? {
-              background: 'var(--color-surface)',
-              color: 'var(--color-text-dim)',
-              boxShadow: 'none',
-              border: '1px solid var(--color-border)',
-            } : {}),
-          }}
-        >
-          {isRunning ? (
-            <>
-              <motion.div
-                className="w-4 h-4 rounded-full border-2 border-t-transparent"
-                style={{ borderColor: 'var(--color-text-dim)', borderTopColor: 'transparent' }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-              />
-              Executing...
-            </>
-          ) : (
-            <>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 1.5L12 7L3 12.5V1.5Z" fill="currentColor" />
-              </svg>
-              Run Code
-            </>
-          )}
-        </motion.button>
+        <div className="flex gap-2">
+          {/* Hint Button */}
+          {hints && (hints.length > 0 || solution) && (() => {
+            const maxHints = hints.length + (solution ? 1 : 0);
+            const isExhausted = hintsUsed >= maxHints;
+            const isReadyForSolution = hintsUsed === hints.length && solution;
+            
+            return (
+              <motion.button
+                id="hint-button"
+                whileHover={{ scale: isExhausted ? 1 : 1.05 }}
+                whileTap={{ scale: isExhausted ? 1 : 0.95 }}
+                onClick={onUseHint}
+                disabled={isExhausted || isRunning}
+                className="relative flex items-center justify-center gap-1.5 px-4 rounded-xl text-xs font-bold transition-all duration-200"
+                style={{
+                  background: isExhausted
+                    ? 'var(--color-surface)'
+                    : isReadyForSolution
+                      ? 'rgba(232, 185, 74, 0.12)'
+                      : 'rgba(232, 185, 74, 0.06)',
+                  border: `1.5px solid ${
+                    isExhausted
+                      ? 'var(--color-border)'
+                      : isReadyForSolution
+                        ? 'var(--color-primary)'
+                        : 'var(--color-border-accent)'
+                  }`,
+                  color: isExhausted
+                    ? 'var(--color-text-dim)'
+                    : 'var(--color-primary)',
+                  opacity: isExhausted ? 0.5 : 1,
+                  cursor: isExhausted ? 'not-allowed' : 'pointer',
+                  minWidth: '85px',
+                }}
+                animate={!isExhausted && !isRunning ? {
+                  boxShadow: [
+                    '0 0 0 0 rgba(232, 185, 74, 0)',
+                    isReadyForSolution ? '0 0 16px rgba(232, 185, 74, 0.4)' : '0 0 12px rgba(232, 185, 74, 0.25)',
+                    '0 0 0 0 rgba(232, 185, 74, 0)'
+                  ]
+                } : { boxShadow: 'none' }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'easeInOut'
+                }}
+              >
+                <span className="text-base">{isReadyForSolution ? '🔑' : '💡'}</span>
+                <span>
+                  {isReadyForSolution ? 'Solution' : isExhausted ? '0' : (hints.length - hintsUsed)}
+                </span>
+              </motion.button>
+            );
+          })()}
+
+          {/* Run button */}
+          <motion.button
+            id="run-button"
+            whileHover={{ scale: isRunning ? 1 : 1.015 }}
+            whileTap={{ scale: isRunning ? 1 : 0.985 }}
+            onClick={onRun}
+            disabled={isRunning}
+            className="btn-primary shimmer-btn flex-1 text-sm flex items-center justify-center gap-3"
+            style={{
+              ...(isRunning ? {
+                background: 'var(--color-surface)',
+                color: 'var(--color-text-dim)',
+                boxShadow: 'none',
+                border: '1px solid var(--color-border)',
+              } : {}),
+            }}
+          >
+            {isRunning ? (
+              <>
+                <motion.div
+                  className="w-4 h-4 rounded-full border-2 border-t-transparent"
+                  style={{ borderColor: 'var(--color-text-dim)', borderTopColor: 'transparent' }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                />
+                Executing...
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 1.5L12 7L3 12.5V1.5Z" fill="currentColor" />
+                </svg>
+                Run Code
+              </>
+            )}
+          </motion.button>
+        </div>
       </div>
     </div>
   );

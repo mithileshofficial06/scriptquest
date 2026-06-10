@@ -24,6 +24,7 @@ export default function CelebrationOverlay({
   onContinue,
   onRetry,
   badge,
+  coinsGained,
 }) {
   if (!celebration) return null;
 
@@ -92,8 +93,8 @@ export default function CelebrationOverlay({
               {celebration.title}
             </h2>
 
-            {/* Line count */}
-            <div className="flex justify-center mb-5">
+            {/* Coins and Line count */}
+            <div className="flex justify-center gap-3 mb-5">
               <div
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold"
                 style={{
@@ -104,6 +105,22 @@ export default function CelebrationOverlay({
               >
                 📝 {lineCount} lines of code
               </div>
+
+              {coinsGained > 0 && (
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    border: '1px solid rgba(245, 158, 11, 0.35)',
+                    color: '#f59e0b',
+                  }}
+                >
+                  🪙 +{coinsGained} Coins {coinsGained > 15 ? 'Optimal! 🚀' : ''}
+                </motion.div>
+              )}
             </div>
 
             {/* Badge award */}

@@ -8,10 +8,13 @@ import ErrorOverlay from './components/ErrorOverlay';
 import StageHeader from './components/StageHeader';
 import BugHuntOverlay from './components/BugHuntOverlay';
 import LevelEditor from './components/LevelEditor';
+import SkinShop from './components/SkinShop';
 import { stages } from './data/stages';
 import { solutions } from './data/solutions';
 import { parseLuaCode, simulateExecution, detectRepeatedPattern, refactorCodeWithFunction } from './engine/luaEngine';
 import { loadProgress, markStageComplete, saveCustomLevel, loadCustomLevel, clearCustomLevel, awardBadge } from './engine/storage';
+import { setSoundEnabled, playMove, playJump, playFail, playSuccess, playCoin, playClick, playDoor } from './engine/sound';
+
 
 /* ===== Step animation timing ===== */
 const STEP_DELAY_MS = 500;
@@ -86,6 +89,34 @@ export default function App() {
 
   // ═══════ Active traps state (Stages 8 & 10) ═══════
   const [activeTraps, setActiveTraps] = useState(new Set());
+
+  // ═══════ Gamification & Customization states ═══════
+  const [coins, setCoins] = useState(() => {
+    return parseInt(localStorage.getItem('scriptquest_coins') || '0', 10);
+  });
+  const [unlockedSkins, setUnlockedSkins] = useState(() => {
+    try {
+      const saved = localStorage.getItem('scriptquest_unlocked_skins');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return ['default'];
+  });
+  const [selectedSkin, setSelectedSkin] = useState(() => {
+    return localStorage.getItem('scriptquest_selected_skin') || 'default';
+  });
+  const [soundEnabled, setSoundEnabledState] = useState(() => {
+    const saved = localStorage.getItem('scriptquest_sound_enabled');
+    return saved !== 'false';
+  });
+  const [showSkinShop, setShowSkinShop] = useState(false);
+  const [execSpeed, setExecSpeed] = useState(450); // Default speed (Normal = 450ms)
+  const [lastCoinsGained, setLastCoinsGained] = useState(0);
+
+  // Sync sound library value with state
+  useEffect(() => {
+    setSoundEnabled(soundEnabled);
+    localStorage.setItem('scriptquest_sound_enabled', soundEnabled.toString());
+  }, [soundEnabled]);
 
   const randomizeTraps = useCallback((s) => {
     if (!s || !s.hasTraps || !s.trapPositions) {
@@ -305,6 +336,7 @@ export default function App() {
       setCodeError(parseResult.error);
       setExecutingLine(parseResult.error.line);
       setHighlightType('error');
+      playFail();
 
       // Show hint for bug hunt on first failure
       if (stage?.mode === 'bugHunt' && !bugHintShown) {
@@ -347,6 +379,7 @@ export default function App() {
             line: steps[steps.length - 1]?.line || 1,
             message: "Your avatar ran out of commands but didn't reach the star! Add more commands.",
           });
+          playFail();
           // Show hint on failure in bug hunt
           if (stage?.mode === 'bugHunt' && !bugHintShown) {
             setBugHintShown(true);
@@ -366,6 +399,17 @@ export default function App() {
         setHighlightType(step.status === 'error' ? 'error' : 'executing');
       }
 
+      // Play synthesized sound effects per step action
+      if (step.status === 'star') {
+        playSuccess();
+      } else if (step.status === 'error') {
+        playFail();
+      } else if (step.command === 'jump') {
+        playJump();
+      } else if (step.command === 'moveRight' || step.command === 'moveLeft' || step.command === 'moveUp' || step.command === 'moveDown') {
+        playMove();
+      }
+
       // Handle step result
       if (step.status === 'star') {
         // WIN!
@@ -380,8 +424,43 @@ export default function App() {
             // Bug hunt success — show bug hunt overlay
             const newCount = bugsSquashed + 1;
             setBugsSquashed(newCount);
+            
+            // Award 10 coins for bug squash!
+            setCoins((prev) => {
+              const newCoins = prev + 10;
+              localStorage.setItem('scriptquest_coins', newCoins.toString());
+              return newCoins;
+            });
+            setLastCoinsGained(10);
+            setTimeout(() => playCoin(), 250);
+            
             setShowBugHuntOverlay(true);
           } else {
+            // Calculate coins gained
+            const isFirstCompletion = !progress.completedStages.includes(currentStageId);
+            const isOptimal = codeLines <= (stage?.optimalLines || 0);
+            const previouslyOptimal = progress.stageScores[currentStageId]?.bestLines <= (stage?.optimalLines || 0);
+
+            let coinsGained = 0;
+            if (isFirstCompletion) {
+              coinsGained += 15;
+            }
+            if (isOptimal && !previouslyOptimal) {
+              coinsGained += 20;
+            }
+
+            if (coinsGained > 0) {
+              setCoins((prev) => {
+                const newCoins = prev + coinsGained;
+                localStorage.setItem('scriptquest_coins', newCoins.toString());
+                return newCoins;
+              });
+              setLastCoinsGained(coinsGained);
+              setTimeout(() => playCoin(), 250);
+            } else {
+              setLastCoinsGained(0);
+            }
+
             // Normal stage success
             const newProgress = markStageComplete(currentStageId, codeLines);
             setProgress(newProgress);
@@ -432,7 +511,7 @@ export default function App() {
       }
 
       stepIndex++;
-      setTimeout(animateStep, STEP_DELAY_MS);
+      setTimeout(animateStep, execSpeed);
     };
 
     // Start after a short delay to let the reset animation play
@@ -501,6 +580,14 @@ export default function App() {
     // Mark stage complete
     const newProgress = markStageComplete(currentStageId, 0);
     setProgress(newProgress);
+    // Award coins for bug hunt completion
+    setCoins((prev) => {
+      const newCoins = prev + 15;
+      localStorage.setItem('scriptquest_coins', newCoins.toString());
+      return newCoins;
+    });
+    setLastCoinsGained(15);
+    setTimeout(() => playCoin(), 300);
     // Show final celebration
     setShowCelebration(true);
   }, [currentStageId]);
@@ -576,6 +663,56 @@ export default function App() {
       <div className="bg-blob bg-blob-primary" />
       <div className="bg-blob bg-blob-secondary" />
 
+      {/* Top Header Bar */}
+      <header className="glass-panel z-20 flex items-center justify-between px-6 py-2.5 border-b border-[rgba(255,255,255,0.06)]" style={{ background: 'rgba(10, 10, 15, 0.7)', backdropFilter: 'blur(12px)' }}>
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <span className="text-xl">🚀</span>
+          <div className="flex flex-col">
+            <span className="font-black tracking-widest text-sm bg-gradient-to-r from-[#e8b94a] to-[#ffdd80] bg-clip-text text-transparent" style={{ textShadow: '0 0 10px rgba(232, 185, 74, 0.15)' }}>
+              SCRIPTQUEST
+            </span>
+            <span className="text-[8px] uppercase font-bold tracking-wider text-[#e8b94a]/85">
+              Roblox Coding Academy
+            </span>
+          </div>
+        </div>
+
+        {/* Controls, Coins and Shop */}
+        <div className="flex items-center gap-4">
+          {/* Coins Display */}
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/35 text-amber-400 font-extrabold text-xs shadow-[0_0_12px_rgba(245,158,11,0.15)]"
+          >
+            <span>🪙</span>
+            <span>{coins} Coins</span>
+          </motion.div>
+
+          {/* Customize Avatar Button */}
+          <motion.button 
+            onClick={() => { playClick(); setShowSkinShop(true); }} 
+            whileHover={{ scale: 1.05 }} 
+            whileTap={{ scale: 0.95 }} 
+            className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/25 border border-purple-400/20 cursor-pointer flex items-center gap-1.5"
+          >
+            <span>👕</span>
+            <span>Skin Shop</span>
+          </motion.button>
+
+          {/* Sound Toggle */}
+          <motion.button 
+            whileHover={{ scale: 1.05 }} 
+            whileTap={{ scale: 0.95 }} 
+            onClick={() => setSoundEnabledState(prev => !prev)} 
+            className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/10 hover:bg-white/5 text-white/80 hover:text-white transition-all cursor-pointer text-xs"
+            title={soundEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
+          >
+            {soundEnabled ? '🔊' : '🔇'}
+          </motion.button>
+        </div>
+      </header>
+
       {/* Main content area */}
       <div className="flex flex-1 min-h-0 relative z-10">
         {/* Left: Game World or Level Editor (60%) */}
@@ -624,7 +761,7 @@ export default function App() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSelectStage(currentStageId - 1)}
+                    onClick={() => { playClick(); handleSelectStage(currentStageId - 1); }}
                     className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-sm glass-panel border border-[#e8b94a]/30 text-[#e8b94a] hover:bg-[#e8b94a]/10 transition-all cursor-pointer"
                     title="Previous Stage"
                   >
@@ -637,7 +774,7 @@ export default function App() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSelectStage(currentStageId + 1)}
+                    onClick={() => { playClick(); handleSelectStage(currentStageId + 1); }}
                     className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-sm glass-panel border border-[#e8b94a]/30 text-[#e8b94a] hover:bg-[#e8b94a]/10 transition-all cursor-pointer"
                     title="Next Stage"
                   >
@@ -693,8 +830,8 @@ export default function App() {
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={handleBackToEditor}
-                  className="px-3 py-2 rounded-xl text-xs font-semibold glass-panel"
+                  onClick={() => { playClick(); handleBackToEditor(); }}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold glass-panel cursor-pointer"
                   style={{
                     border: '1px solid var(--color-border)',
                     color: 'var(--color-text-secondary)',
@@ -709,8 +846,8 @@ export default function App() {
               stage={activeStage}
               hasPrev={currentStageId > 1}
               hasNext={currentStageId < stages.length && (progress.completedStages.includes(currentStageId) || progress.completedStages.includes(currentStageId + 1) || currentStageId < progress.currentStage)}
-              onPrevStage={() => handleSelectStage(currentStageId - 1)}
-              onNextStage={() => handleSelectStage(currentStageId + 1)}
+              onPrevStage={() => { playClick(); handleSelectStage(currentStageId - 1); }}
+              onNextStage={() => { playClick(); handleSelectStage(currentStageId + 1); }}
             />
           ) : null}
 
@@ -723,9 +860,9 @@ export default function App() {
               onGridChange={setCustomGrid}
               onPlayerStartChange={setCustomPlayerStart}
               onStarPositionChange={setCustomStarPosition}
-              onPlayLevel={handlePlayLevel}
-              onSaveLevel={handleSaveCustomLevel}
-              onClearLevel={handleClearCustomLevel}
+              onPlayLevel={() => { playClick(); handlePlayLevel(); }}
+              onSaveLevel={() => { playClick(); handleSaveCustomLevel(); }}
+              onClearLevel={() => { playClick(); handleClearCustomLevel(); }}
             />
           ) : (
             <GameWorld
@@ -738,6 +875,7 @@ export default function App() {
               isFailing={isFailing}
               doorOpen={doorOpen}
               activeTraps={activeTraps}
+              selectedSkin={selectedSkin}
             />
           )}
         </motion.div>
@@ -769,12 +907,17 @@ export default function App() {
             onRefactor={handleRefactor}
             hints={activeStage?.hints}
             hintsUsed={hintsUsed}
-            onUseHint={() => setHintsUsed((prev) => {
-              const hintsCount = activeStage?.hints?.length || 0;
-              const hasSol = activeStage?.solution ? 1 : 0;
-              return Math.min(prev + 1, hintsCount + hasSol);
-            })}
+            onUseHint={() => {
+              playClick();
+              setHintsUsed((prev) => {
+                const hintsCount = activeStage?.hints?.length || 0;
+                const hasSol = activeStage?.solution ? 1 : 0;
+                return Math.min(prev + 1, hintsCount + hasSol);
+              });
+            }}
             solution={activeStage?.solution}
+            execSpeed={execSpeed}
+            onSpeedChange={setExecSpeed}
           />
         </motion.div>
       </div>
@@ -783,7 +926,7 @@ export default function App() {
       <ProgressBar
         currentStageId={currentStageId}
         completedStages={progress.completedStages}
-        onSelectStage={handleSelectStage}
+        onSelectStage={(id) => { playClick(); handleSelectStage(id); }}
       />
 
       {/* Overlays */}
@@ -793,9 +936,10 @@ export default function App() {
         lineCount={lineCount}
         optimalLines={stage?.optimalLines ?? 0}
         lineCountChallenge={stage?.lineCountChallenge}
-        onContinue={handleContinue}
-        onRetry={handleRetry}
+        onContinue={() => { playClick(); handleContinue(); }}
+        onRetry={() => { playClick(); handleRetry(); }}
         badge={currentBadge}
+        coinsGained={lastCoinsGained}
       />
 
       <BugHuntOverlay
@@ -803,7 +947,7 @@ export default function App() {
         bugData={currentBug}
         bugsSquashed={bugsSquashed}
         totalBugs={stage?.bugs?.length ?? 3}
-        onNextBug={handleNextBug}
+        onNextBug={() => { playClick(); handleNextBug(); }}
         onComplete={handleBugHuntComplete}
         isLastBug={currentBugIndex >= (stage?.bugs?.length ?? 3) - 1}
       />
@@ -811,7 +955,19 @@ export default function App() {
       <ErrorOverlay
         error={showError}
         stage={activeStage}
-        onRetry={handleRetry}
+        onRetry={() => { playClick(); handleRetry(); }}
+      />
+
+      {/* Skin Shop Modal */}
+      <SkinShop
+        show={showSkinShop}
+        onClose={() => setShowSkinShop(false)}
+        coins={coins}
+        setCoins={setCoins}
+        unlockedSkins={unlockedSkins}
+        setUnlockedSkins={setUnlockedSkins}
+        selectedSkin={selectedSkin}
+        setSelectedSkin={setSelectedSkin}
       />
     </div>
   );
