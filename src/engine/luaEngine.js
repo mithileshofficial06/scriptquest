@@ -22,7 +22,14 @@ const COMMAND_MAP = {
   'moveUp': { dx: 0, dy: -1 },
   'moveDown': { dx: 0, dy: 1 },
   'jump': { dx: 0, dy: -2 },
+  'moveTo': { dx: 0, dy: 0 }, // Special - sets absolute position
 };
+
+// Condition check functions (return boolean values)
+const CONDITION_FUNCTIONS = new Set(['isTrap', 'isBlocked', 'coinNearby', 'inMudZone', 'inFastZone']);
+
+// Action functions (perform actions without movement)
+const ACTION_FUNCTIONS = new Set(['collectCoin', 'useItem', 'collect', 'displayScore', 'updateTimer', 'gameOver', 'showWin', 'showLose', 'wait']);
 
 // Commands affected by the speed variable (horizontal movement only)
 const SPEED_AFFECTED = new Set(['moveRight', 'moveLeft']);
@@ -48,10 +55,15 @@ export function parseLuaCode(code, runtimeVars = {}) {
   const blockStack = [];
 
   // Helper to determine if we are currently appending commands to the main execution path
+  // For function-based conditions, we return true (commands will be conditionally executed during simulation)
   const isCurrentlyActive = () => {
     let active = true;
     for (const block of blockStack) {
       if (block.type === 'if') {
+        if (block.isFunctionCall) {
+          // Function-based conditions - include all branches, will be filtered during execution
+          continue;
+        }
         const branchActive = (block.currentBranch === 'then') ? block.conditionValue : !block.conditionValue;
         active = active && branchActive;
       } else if (block.type === 'function') {
@@ -79,10 +91,11 @@ export function parseLuaCode(code, runtimeVars = {}) {
     // Skip empty lines and comments
     if (!line || line.startsWith('--')) continue;
 
-    // ── 1. Function definition: function funcName() ──
-    const funcDefMatch = line.match(/^function\s+(\w+)\s*\(\s*\)$/);
+    // ── 1. Function definition: function funcName() OR function funcName(param) ──
+    const funcDefMatch = line.match(/^function\s+(\w+)\s*\(\s*(\w*)\s*\)$/);
     if (funcDefMatch) {
       const funcName = funcDefMatch[1];
+      const param = funcDefMatch[2] || null;
       if (COMMAND_MAP[funcName] || funcName === 'repeat') {
         return {
           commands: [],
@@ -95,6 +108,7 @@ export function parseLuaCode(code, runtimeVars = {}) {
       blockStack.push({
         type: 'function',
         name: funcName,
+        param: param,
         body: [],
         startLine: lineNum,
       });
@@ -102,6 +116,7 @@ export function parseLuaCode(code, runtimeVars = {}) {
       appendCommand({
         name: 'function_def',
         funcName,
+        param,
         delta: { dx: 0, dy: 0 },
         line: lineNum,
         source: line,
@@ -109,22 +124,18 @@ export function parseLuaCode(code, runtimeVars = {}) {
       continue;
     }
 
-    // ── 2. Conditional block: if varName then ──
-    const ifMatch = line.match(/^if\s+(\w+)\s+then$/);
-    if (ifMatch) {
-      const condName = ifMatch[1];
-      const condVal = !!runtimeVars[condName];
+    // ── 2. While loop: while condition do ──
+    const whileMatch = line.match(/^while\s+(.+)\s+do$/);
+    if (whileMatch) {
+      const condition = whileMatch[1].trim();
       blockStack.push({
-        type: 'if',
-        condition: condName,
-        conditionValue: condVal,
-        currentBranch: 'then',
+        type: 'while',
+        condition: condition,
         startLine: lineNum,
       });
       appendCommand({
-        name: 'if',
-        condition: condName,
-        value: condVal,
+        name: 'while',
+        condition: condition,
         delta: { dx: 0, dy: 0 },
         line: lineNum,
         source: line,
@@ -132,7 +143,141 @@ export function parseLuaCode(code, runtimeVars = {}) {
       continue;
     }
 
-    // ── 3. Else block: else ──
+    // ── 3. For loop: for varName = start, end do ──
+    const forMatch = line.match(/^for\s+(\w+)\s*=\s*(\d+)\s*,\s*(\d+)\s+do$/);
+    if (forMatch) {
+      const varName = forMatch[1];
+      const startVal = parseInt(forMatch[2], 10);
+      const endVal = parseInt(forMatch[3], 10);
+      blockStack.push({
+        type: 'for',
+        variable: varName,
+        start: startVal,
+        end: endVal,
+        startLine: lineNum,
+      });
+      appendCommand({
+        name: 'for',
+        variable: varName,
+        start: startVal,
+        end: endVal,
+        delta: { dx: 0, dy: 0 },
+        line: lineNum,
+        source: line,
+      });
+      continue;
+    }
+
+    // ── 4. Conditional block: if varName then OR if not funcName() then OR if comparison then ──
+    const ifVarMatch = line.match(/^if\s+(\w+)\s+then$/);
+    const ifNotFuncMatch = line.match(/^if\s+not\s+(\w+)\(\s*\)\s+then$/);
+    const ifFuncMatch = line.match(/^if\s+(\w+)\(\s*\)\s+then$/);
+    const ifCompMatch = line.match(/^if\s+(\w+)\s*(==|~=|<|>|<=|>=)\s*(.+?)\s+then$/);
+    
+    if (ifVarMatch || ifNotFuncMatch || ifFuncMatch || ifCompMatch) {
+      let condName, condVal, isNegated = false, isFunctionCall = false, isComparison = false, operator = null, compareValue = null;
+      
+      if (ifCompMatch) {
+        condName = ifCompMatch[1];
+        operator = ifCompMatch[2];
+        compareValue = ifCompMatch[3].trim();
+        // Try to parse as number
+        if (/^\d+$/.test(compareValue)) {
+          compareValue = parseInt(compareValue, 10);
+        } else if (compareValue.startsWith('"') && compareValue.endsWith('"')) {
+          compareValue = compareValue.slice(1, -1);
+        }
+        isComparison = true;
+      } else if (ifNotFuncMatch) {
+        condName = ifNotFuncMatch[1];
+        isNegated = true;
+        isFunctionCall = true;
+      } else if (ifFuncMatch) {
+        condName = ifFuncMatch[1];
+        isFunctionCall = true;
+      } else {
+        condName = ifVarMatch[1];
+      }
+      
+      if (isFunctionCall || isComparison) {
+        // For now, we evaluate condition functions dynamically during simulation
+        // Store the function name and negation flag
+        blockStack.push({
+          type: 'if',
+          condition: condName,
+          conditionValue: null, // Will be evaluated per step in simulation
+          isFunctionCall,
+          isComparison,
+          operator,
+          compareValue,
+          isNegated: isNegated,
+          currentBranch: 'then',
+          startLine: lineNum,
+        });
+      } else {
+        condVal = !!runtimeVars[condName];
+        blockStack.push({
+          type: 'if',
+          condition: condName,
+          conditionValue: condVal,
+          isFunctionCall: false,
+          currentBranch: 'then',
+          startLine: lineNum,
+        });
+      }
+      
+      appendCommand({
+        name: 'if',
+        condition: condName,
+        value: (isFunctionCall || isComparison) ? null : condVal,
+        isFunctionCall,
+        isComparison,
+        operator,
+        compareValue,
+        isNegated,
+        delta: { dx: 0, dy: 0 },
+        line: lineNum,
+        source: line,
+      });
+      continue;
+    }
+
+    // ── 5. Elseif block: elseif condition then ──
+    const elseifCompMatch = line.match(/^elseif\s+(\w+)\s*(==|~=|<|>|<=|>=)\s*(.+?)\s+then$/);
+    if (elseifCompMatch) {
+      const topBlock = blockStack[blockStack.length - 1];
+      if (!topBlock || topBlock.type !== 'if') {
+        return {
+          commands: [],
+          error: {
+            line: lineNum,
+            message: `Unexpected "elseif" without a matching "if".`,
+          },
+        };
+      }
+      
+      const condName = elseifCompMatch[1];
+      const operator = elseifCompMatch[2];
+      let compareValue = elseifCompMatch[3].trim();
+      if (/^\d+$/.test(compareValue)) {
+        compareValue = parseInt(compareValue, 10);
+      } else if (compareValue.startsWith('"') && compareValue.endsWith('"')) {
+        compareValue = compareValue.slice(1, -1);
+      }
+      
+      appendCommand({
+        name: 'elseif',
+        condition: condName,
+        operator,
+        compareValue,
+        delta: { dx: 0, dy: 0 },
+        line: lineNum,
+        source: line,
+      });
+      continue;
+    }
+
+    // ── 6. Else block: else ──
     if (line === 'else') {
       const topBlock = blockStack[blockStack.length - 1];
       if (!topBlock || topBlock.type !== 'if') {
@@ -163,7 +308,7 @@ export function parseLuaCode(code, runtimeVars = {}) {
       continue;
     }
 
-    // ── 4. End statement: end ──
+    // ── 7. End statement: end ──
     if (line === 'end') {
       const topBlock = blockStack.pop();
       if (!topBlock) {
@@ -171,13 +316,16 @@ export function parseLuaCode(code, runtimeVars = {}) {
           commands: [],
           error: {
             line: lineNum,
-            message: `Unexpected "end" without opening "if" or "function".`,
+            message: `Unexpected "end" without opening block.`,
           },
         };
       }
 
       if (topBlock.type === 'function') {
-        definedFunctions[topBlock.name] = topBlock.body;
+        definedFunctions[topBlock.name] = {
+          body: topBlock.body,
+          param: topBlock.param,
+        };
       }
 
       appendCommand({
@@ -287,7 +435,79 @@ export function parseLuaCode(code, runtimeVars = {}) {
       continue;
     }
 
-    // ── 7. Simple command/function call: funcName() ──
+    // ── 7. Function call with parameter: funcName(param) ──
+    const paramCallMatch = line.match(/^(\w+)\(\s*(.+?)\s*\)$/);
+    if (paramCallMatch) {
+      const funcName = paramCallMatch[1];
+      const paramStr = paramCallMatch[2].trim();
+      
+      // Parse parameter - could be a number, string, or variable
+      let paramValue;
+      if (/^\d+$/.test(paramStr)) {
+        paramValue = parseInt(paramStr, 10);
+      } else if (paramStr.startsWith('"') && paramStr.endsWith('"')) {
+        paramValue = paramStr.slice(1, -1);
+      } else if (paramStr.startsWith("'") && paramStr.endsWith("'")) {
+        paramValue = paramStr.slice(1, -1);
+      } else {
+        // It's a variable reference or table access
+        paramValue = paramStr;
+      }
+      
+      const isBuiltIn = !!COMMAND_MAP[funcName];
+      const isAction = ACTION_FUNCTIONS.has(funcName);
+      const isCustom = !!definedFunctions[funcName];
+      
+      if (funcName === 'jump' && typeof paramValue === 'number') {
+        // jump(n) - jump n blocks high
+        appendCommand({
+          name: 'jump',
+          delta: { dx: 0, dy: -paramValue },
+          line: lineNum,
+          source: line,
+          param: paramValue,
+        });
+      } else if (isAction) {
+        // Action functions like collectCoin(), displayScore(n), etc.
+        appendCommand({
+          name: funcName,
+          param: paramValue,
+          delta: { dx: 0, dy: 0 },
+          line: lineNum,
+          source: line,
+        });
+      } else if (isCustom) {
+        // Custom function with parameter
+        const funcDef = definedFunctions[funcName];
+        appendCommand({
+          name: 'call',
+          funcName,
+          param: paramValue,
+          delta: { dx: 0, dy: 0 },
+          line: lineNum,
+          source: line,
+        });
+        // Expand function body with parameter substitution
+        for (const bodyCmd of funcDef.body) {
+          appendCommand({
+            ...bodyCmd,
+            isFromCustomFunc: true,
+            funcParam: paramValue,
+          });
+        }
+      } else {
+        return {
+          commands: [],
+          error: {
+            line: lineNum,
+            message: `Unknown function: ${funcName}(). Check spelling!`,
+          },
+        };
+      }
+      continue;
+    }
+
+    // ── 8. Simple command/function call: funcName() ──
     const simpleMatch = line.match(/^(\w+)\(\s*\)$/);
     if (simpleMatch) {
       const funcName = simpleMatch[1];
@@ -372,10 +592,22 @@ export function parseLuaCode(code, runtimeVars = {}) {
  * whether each step succeeded or hit an error.
  */
 export function simulateExecution(commands, stage, runtimeVars = {}) {
-  const { grid, playerStart, starPosition } = stage;
-  const { doorOpen } = runtimeVars;
+  const { grid, playerStart, starPosition, hasTraps, trapPositions } = stage;
+  const { doorOpen, activeTraps } = runtimeVars;
   const steps = [];
   let pos = { col: playerStart.col, row: playerStart.row };
+  let currentSpeed = 1;
+  
+  // Use active traps passed from runtimeVars (or fallback)
+  const activeTrapsSet = new Set(activeTraps || []);
+  
+  // Helper to check if current position is a trap
+  const isTrapAt = (col) => {
+    return activeTrapsSet.has(col);
+  };
+  
+  // Track if we're inside an if-block and what branch we're executing
+  let ifBlockStack = [];
 
   // Record the starting position
   steps.push({
@@ -387,22 +619,147 @@ export function simulateExecution(commands, stage, runtimeVars = {}) {
   });
 
   for (const cmd of commands) {
-    // Structural commands do not move — just highlight the line
-    if (cmd.name === 'assign' || cmd.name === 'if' || cmd.name === 'else' || cmd.name === 'end' || cmd.name === 'function_def' || cmd.name === 'call') {
+    // Handle if statement
+    if (cmd.name === 'if') {
+      let conditionResult;
+      
+      if (cmd.isFunctionCall) {
+        // Evaluate condition function
+        if (cmd.condition === 'isTrap') {
+          conditionResult = isTrapAt(pos.col + 1); // Check block directly in front!
+        } else if (cmd.condition === 'isBlocked') {
+          // Check if next tile is blocked
+          const nextCol = pos.col + 1;
+          const nextRow = pos.row;
+          let tile = grid[nextRow]?.[nextCol];
+          if (tile === 3) tile = doorOpen ? 0 : 2;
+          conditionResult = (tile === 1 || tile === 2);
+        } else if (cmd.condition === 'inMudZone') {
+          conditionResult = stage.mudZone && pos.col >= stage.mudZone.start && pos.col <= stage.mudZone.end;
+        } else if (cmd.condition === 'inFastZone') {
+          conditionResult = stage.fastZone && pos.col >= stage.fastZone.start && pos.col <= stage.fastZone.end;
+        } else if (cmd.condition === 'coinNearby') {
+          conditionResult = false; // Default for now
+        } else {
+          conditionResult = false;
+        }
+        
+        // Apply negation if needed
+        if (cmd.isNegated) {
+          conditionResult = !conditionResult;
+        }
+      } else {
+        // Variable-based condition
+        conditionResult = cmd.value;
+      }
+      
+      ifBlockStack.push({
+        conditionResult,
+        currentBranch: 'then',
+        executing: conditionResult,
+      });
+      
       steps.push({
         col: pos.col,
         row: pos.row,
         command: cmd.name,
         line: cmd.line,
         status: 'ok',
-        variable: cmd.variable,
-        value: cmd.value,
+        condition: cmd.condition,
+        value: conditionResult,
       });
       continue;
     }
+    
+    // Handle else statement
+    if (cmd.name === 'else') {
+      const topBlock = ifBlockStack[ifBlockStack.length - 1];
+      if (topBlock) {
+        topBlock.currentBranch = 'else';
+        topBlock.executing = !topBlock.conditionResult;
+      }
+      
+      steps.push({
+        col: pos.col,
+        row: pos.row,
+        command: cmd.name,
+        line: cmd.line,
+        status: 'ok',
+      });
+      continue;
+    }
+    
+    // Handle end statement
+    if (cmd.name === 'end') {
+      if (cmd.blockType === 'if') {
+        ifBlockStack.pop();
+      }
+      
+      steps.push({
+        col: pos.col,
+        row: pos.row,
+        command: cmd.name,
+        line: cmd.line,
+        status: 'ok',
+      });
+      continue;
+    }
+    
+    // Check if we should execute this command based on if-block state
+    const shouldExecute = ifBlockStack.length === 0 || ifBlockStack[ifBlockStack.length - 1].executing;
+    
+    // Structural commands do not move — just highlight the line
+    if (cmd.name === 'assign' || cmd.name === 'function_def' || cmd.name === 'call') {
+      if (shouldExecute) {
+        if (cmd.name === 'assign' && cmd.variable === 'speed') {
+          currentSpeed = cmd.value;
+        }
+        steps.push({
+          col: pos.col,
+          row: pos.row,
+          command: cmd.name,
+          line: cmd.line,
+          status: 'ok',
+          variable: cmd.variable,
+          value: cmd.value,
+        });
+      }
+      continue;
+    }
+    
+    // Skip movement commands inside inactive if-branches
+    if (!shouldExecute) {
+      continue;
+    }
 
-    const newCol = pos.col + cmd.delta.dx;
-    const newRow = pos.row + cmd.delta.dy;
+    let dx = cmd.delta.dx;
+    let dy = cmd.delta.dy;
+
+    // Apply runtime speed values dynamically
+    if (cmd.name === 'moveRight' || cmd.name === 'moveLeft') {
+      dx = (cmd.name === 'moveRight' ? 1 : -1) * currentSpeed;
+    }
+
+    // Special Stage 8 / 10 forward jump to clear traps
+    if (cmd.name === 'jump' && (stage.id === 8 || stage.id === 10)) {
+      dx = 2;
+    }
+
+    const newCol = pos.col + dx;
+    const newRow = pos.row + dy;
+
+    // Check if new position is a trap
+    if (hasTraps && isTrapAt(newCol)) {
+      steps.push({
+        col: newCol,
+        row: newRow,
+        command: cmd.name,
+        line: cmd.line,
+        status: 'error',
+        errorType: 'trap',
+      });
+      return { steps, success: false };
+    }
 
     // Check bounds
     if (newCol < 0 || newCol >= grid[0].length || newRow < 0 || newRow >= grid.length) {

@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 import { TILE_SIZE, TILE_PLATFORM, TILE_WALL, TILE_DOOR, GRID_COLS, GRID_ROWS } from '../data/stages';
 
 /* ═══════════════════════════════════════════════════
@@ -267,21 +268,112 @@ function starPoints(cx, cy, outerR, innerR) {
   return points.join(' ');
 }
 
-/* ═══════════════════════════════════════════════════════
-   Platform Tile — dark stone with subtle golden accents
-   ═══════════════════════════════════════════════════════ */
-function PlatformTile({ col, row, isTop }) {
+/* ═══════════════════════════════════════════
+   Trap Tile — red X marker that appears on traps
+   ═══════════════════════════════════════════ */
+function TrapTile({ col, row, active }) {
   const x = col * TILE_SIZE;
   const y = row * TILE_SIZE;
 
+  if (!active) return null;
+
   return (
     <g>
-      {/* Main block — gradient obsidian/stone */}
+      {/* Red glow background */}
+      <motion.rect
+        x={x + 4}
+        y={y + 4}
+        width={TILE_SIZE - 8}
+        height={TILE_SIZE - 8}
+        rx={6}
+        fill="rgba(224, 108, 117, 0.2)"
+        animate={{
+          opacity: [0.2, 0.4, 0.2],
+        }}
+        transition={{
+          duration: 1.5,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
+      
+      {/* Red X */}
+      <g>
+        <motion.line
+          x1={x + 15}
+          y1={y + 15}
+          x2={x + TILE_SIZE - 15}
+          y2={y + TILE_SIZE - 15}
+          stroke="#e06c75"
+          strokeWidth={4}
+          strokeLinecap="round"
+          animate={{
+            opacity: [0.6, 1, 0.6],
+          }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+        <motion.line
+          x1={x + TILE_SIZE - 15}
+          y1={y + 15}
+          x2={x + 15}
+          y2={y + TILE_SIZE - 15}
+          stroke="#e06c75"
+          strokeWidth={4}
+          strokeLinecap="round"
+          animate={{
+            opacity: [0.6, 1, 0.6],
+          }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+      </g>
+    </g>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   Platform Tile — dark stone with subtle golden accents
+   ═══════════════════════════════════════════════════════ */
+function PlatformTile({ col, row, isTop, stage }) {
+  const x = col * TILE_SIZE;
+  const y = row * TILE_SIZE;
+
+  // Detect special zones
+  const isMud = stage?.mudZone && col >= stage.mudZone.start && col <= stage.mudZone.end;
+  const isFast = stage?.fastZone && col >= stage.fastZone.start && col <= stage.fastZone.end;
+
+  let fill = "url(#stoneGrad)";
+  let borderStroke = "#0d0f14";
+  let topBorderFill = "url(#goldBorderGrad)";
+  let topBorderGlow = "rgba(232,185,74,0.08)";
+
+  if (isMud) {
+    fill = "url(#mudGrad)";
+    borderStroke = "#1b120e";
+    topBorderFill = "#5c4033";
+    topBorderGlow = "rgba(92,64,51,0.2)";
+  } else if (isFast) {
+    fill = "url(#fastGrad)";
+    borderStroke = "#0a1526";
+    topBorderFill = "url(#fastBorderGrad)";
+    topBorderGlow = "rgba(0,242,254,0.2)";
+  }
+
+  return (
+    <g>
+      {/* Main block */}
       <rect
         x={x} y={y}
         width={TILE_SIZE} height={TILE_SIZE}
-        fill="url(#stoneGrad)"
-        stroke="#0d0f14"
+        fill={fill}
+        stroke={borderStroke}
         strokeWidth={1}
       />
       {/* Bevel highlight */}
@@ -297,18 +389,18 @@ function PlatformTile({ col, row, isTop }) {
       <rect x={x + 28} y={y + 25} width={18} height={10} rx={2} fill="rgba(255,255,255,0.01)" />
       <rect x={x + 10} y={y + 38} width={15} height={8} rx={2} fill="rgba(255,255,255,0.015)" />
 
-      {/* Top edge — golden accent line (only on topmost platform row) */}
+      {/* Top edge — dynamic accent line */}
       {isTop && (
         <>
           <rect
             x={x} y={y}
             width={TILE_SIZE} height={3}
-            fill="url(#goldBorderGrad)"
+            fill={topBorderFill}
           />
           <rect
             x={x} y={y + 3}
             width={TILE_SIZE} height={4}
-            fill="rgba(232,185,74,0.08)"
+            fill={topBorderGlow}
           />
         </>
       )}
@@ -462,14 +554,17 @@ function ParticleBurst({ x, y, active }) {
 /* ═════════════════════════════════
    Main GameWorld Component
    ═════════════════════════════════ */
-export default function GameWorld({ stage, playerPos, executingLine, isRunning, starCollected, showParticles, isFailing, doorOpen }) {
+export default function GameWorld({ stage, playerPos, executingLine, isRunning, starCollected, showParticles, isFailing, doorOpen, activeTraps }) {
   if (!stage) return null;
 
-  const { grid, starPosition } = stage;
+  const { grid, starPosition, hasTraps, trapPositions } = stage;
   const width = GRID_COLS * TILE_SIZE;
   const height = GRID_ROWS * TILE_SIZE;
 
   const direction = playerPos.col > (stage.playerStart?.col ?? 0) ? 'right' : 'left';
+  
+  // Use activeTraps set passed as prop (fall back to empty set if not provided)
+  const activeTrapsSet = activeTraps instanceof Set ? activeTraps : new Set(activeTraps || []);
 
   return (
     <div
@@ -534,6 +629,25 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
             <stop offset="50%" stopColor="#fff8e3" />
             <stop offset="100%" stopColor="#d4a23a" />
           </linearGradient>
+
+          {/* Mud zone gradient */}
+          <linearGradient id="mudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#4a3325" />
+            <stop offset="100%" stopColor="#2b1c13" />
+          </linearGradient>
+
+          {/* Fast/speed zone gradient */}
+          <linearGradient id="fastGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#0f2b48" />
+            <stop offset="100%" stopColor="#071524" />
+          </linearGradient>
+
+          {/* Fast/speed neon top edge gradient */}
+          <linearGradient id="fastBorderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#00f2fe" />
+            <stop offset="50%" stopColor="#7f00ff" />
+            <stop offset="100%" stopColor="#4facfe" />
+          </linearGradient>
         </defs>
 
         {/* Ambient floating particles */}
@@ -553,7 +667,7 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
             if (tile === TILE_PLATFORM) {
               // Determine if this is the topmost platform tile (air above)
               const isTop = rowIdx === 0 || grid[rowIdx - 1]?.[colIdx] !== TILE_PLATFORM;
-              return <PlatformTile key={`${rowIdx}-${colIdx}`} col={colIdx} row={rowIdx} isTop={isTop} />;
+              return <PlatformTile key={`${rowIdx}-${colIdx}`} col={colIdx} row={rowIdx} isTop={isTop} stage={stage} />;
             }
             if (tile === TILE_WALL) {
               return (
@@ -582,6 +696,16 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
             return null;
           })
         )}
+        
+        {/* Trap tiles overlay */}
+        {hasTraps && trapPositions && trapPositions.map((col) => (
+          <TrapTile
+            key={`trap-${col}`}
+            col={col}
+            row={5}
+            active={activeTrapsSet.has(col)}
+          />
+        ))}
 
         {/* Star */}
         <Star col={starPosition.col} row={starPosition.row} collected={starCollected} />

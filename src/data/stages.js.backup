@@ -370,7 +370,7 @@ export const stages = [
     },
   },
   // ═════════════════════════════════════════════════════════
-  // ZONE 2: LEVEL UP (Stages 8–10)
+  // ZONE 2: LEVEL UP (Stages 8–12)
   // Combination challenges using everything from Zone 1
   // ═════════════════════════════════════════════════════════
   {
@@ -379,7 +379,7 @@ export const stages = [
     subtitle: 'Loops + Conditions',
     description: 'Navigate a path with random traps! Use loops AND conditions together.',
     availableFunctions: ['moveRight()', 'moveLeft()', 'jump()', 'isTrap()', 'isBlocked()'],
-    starterCode: '-- Some tiles randomly turn into traps each run!\n-- Write a loop that also checks for traps inside it:\n\n',
+    starterCode: '-- Some tiles are traps that appear randomly!\n-- Move along the path AND check for traps.\n-- Hint: Use a loop with an if check inside it.\n\n',
     grid: [
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -393,18 +393,18 @@ export const stages = [
     playerStart: { col: 0, row: 5 },
     starPosition: { col: 11, row: 5 },
     optimalLines: 5,
-    hasTraps: true,
-    trapPositions: [3, 5, 7, 9],
+    hasTraps: true, // Special flag for trap mechanics
+    trapPositions: [3, 5, 7, 9], // Trap positions (randomly active)
     celebration: {
       title: '🎉 Control Flow Master!',
       explanation:
-        'You used a loop AND a condition together. That is called control flow. Almost every Roblox script is built on exactly this combination.',
+        'You used a **loop AND a condition together**. That is called **control flow** — the heart of every Roblox script. Almost every game you have ever played uses exactly this combination to make things happen!',
       concept: 'Control Flow (Loops + Conditions)',
     },
     hints: [
-      '💡 Traps appear randomly. Your code needs to check if the next tile has a trap before stepping on it!',
-      '💡 Use an if condition inside your loop: if isTrap() then ... else ... end.',
-      '💡 If there is a trap, jump() to clear it. Otherwise, moveRight() to walk!',
+      '💡 The path has traps that randomly appear. Your loop needs to check each tile before moving!',
+      '💡 Use a loop to repeat your moves, then add an if isTrap() check INSIDE the loop.',
+      '💡 Try:\nrepeat(11, function()\n  if not isTrap() then\n    moveRight()\n  end\nend)',
     ],
     errorMessages: {
       trap: 'Your loop is running but not checking for traps. Try adding an if isTrap() check inside your loop.',
@@ -416,8 +416,8 @@ export const stages = [
     id: 9,
     name: 'Speed Shift',
     subtitle: 'Dynamic Variables',
-    description: 'Change speed variable inside a function based on mud vs fast zones!',
-    availableFunctions: ['moveRight()', 'inMudZone()', 'inFastZone()'],
+    description: 'Adjust speed based on the terrain type!',
+    availableFunctions: ['moveRight()', 'inMudZone()', 'inFastZone()', 'speed = n'],
     starterCode: '-- Two zones: mud (slow) and fast (clean platform)\n-- Adjust your speed based on which zone you\'re in!\n\n',
     grid: [
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -426,64 +426,61 @@ export const stages = [
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
-      [1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+      [1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1],
+      [1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1],
     ],
     playerStart: { col: 0, row: 5 },
     starPosition: { col: 11, row: 5 },
-    optimalLines: 10,
-    mudZone: { start: 0, end: 3 },
-    fastZone: { start: 6, end: 8 },
+    optimalLines: 6,
+    mudZones: [[0, 2]], // col ranges for mud
+    fastZones: [[5, 8]], // col ranges for fast platforms
     celebration: {
       title: '🎉 Variable Mastery!',
       explanation:
-        'You changed a variable inside a function based on a condition. That is exactly how Roblox characters handle different terrain — mud, ice, water, speed pads.',
+        'You changed a **variable inside a function based on a condition**. That is exactly how Roblox characters handle different terrain — mud, ice, water, speed pads. You just coded real game physics!',
       concept: 'Dynamic Variables',
     },
     hints: [
-      '💡 Mud zone is slow (cols 0-3) — use speed = 1. Fast zone is fast (cols 6-8) — use speed = 2.',
-      '💡 To jump the gap at col 5, you need speed = 3 when you are on the normal block at col 4!',
-      '💡 Define a function that checks inMudZone() and inFastZone() to change the speed, then call it in a loop.',
+      '💡 Different zones need different speeds. Too fast in mud = overshoot. Too slow in fast zone = can\'t make the jump!',
+      '💡 Check which zone you\'re in with inMudZone() and inFastZone(), then set speed accordingly.',
+      '💡 Try: if inMudZone() then speed = 3, else if inFastZone() then speed = 4',
     ],
     errorMessages: {
-      wall: 'Hit a wall!',
+      wall: 'Hit something solid!',
       fall: 'Fell! Check your speed for this zone.',
-      outOfBounds: 'Out of bounds!',
+      outOfBounds: 'Went too far! Adjust speed.',
     },
   },
   {
     id: 10,
     name: 'No Help Level',
     subtitle: 'Flying Solo',
-    description: 'Use everything you\'ve learned (variables, loops, conditions, custom functions) to solve this final map with zero help!',
-    availableFunctions: [],
-    hints: [],
-    starterCode: '-- No hints or command helpers this time!\n-- Use loops, conditions, variables, and custom functions together.\n\n',
+    description: 'Complex puzzle. No hints. No scaffolding. You know everything you need!',
+    availableFunctions: [], // Intentionally empty - she must remember
+    starterCode: '-- No hints this time!\n-- Use everything you\'ve learned: variables, loops,\n-- conditions, and your own functions.\n\n',
     grid: [
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [1, 1, 3, 1, 1, 1, 1, 1, 1, 0, 0, 1],
-      [1, 1, 3, 1, 1, 1, 1, 1, 1, 0, 0, 1],
+      [1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+      [1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
     ],
     playerStart: { col: 0, row: 5 },
-    starPosition: { col: 11, row: 5 },
+    starPosition: { col: 11, row: 1 },
     optimalLines: 12,
-    hasRandomDoor: true,
-    hasTraps: true,
-    trapPositions: [5],
     celebration: {
       title: '🎖️ Flying Solo!',
       explanation:
-        'You solved that with zero hints. You used loops, conditions, variables, and your own functions all at once. That is real programming. That is exactly what a Roblox developer does when they open a blank script.',
+        'You solved that with **zero hints**. You used loops, conditions, variables, and your own functions all at once. That is real programming. That is exactly what a Roblox developer does when they open a blank script.',
       concept: 'Independent Problem Solving',
     },
+    hints: [], // No hints!
     errorMessages: {
-      wall: 'Hit a wall or closed door!',
-      fall: 'Fell into a gap or trap!',
+      wall: 'Hit something. Rethink your approach!',
+      fall: 'Fell! Try a different path.',
       outOfBounds: 'Out of bounds!',
     },
   },

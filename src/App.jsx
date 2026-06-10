@@ -68,6 +68,34 @@ export default function App() {
   // ═══════ Hints state ═══════
   const [hintsUsed, setHintsUsed] = useState(0);
 
+  // ═══════ Active traps state (Stages 8 & 10) ═══════
+  const [activeTraps, setActiveTraps] = useState(new Set());
+
+  const randomizeTraps = useCallback((s) => {
+    if (!s || !s.hasTraps || !s.trapPositions) {
+      setActiveTraps(new Set());
+      return new Set();
+    }
+    const traps = new Set();
+    s.trapPositions.forEach((col) => {
+      if (Math.random() < 0.5) {
+        traps.add(col);
+      }
+    });
+    // Ensure at least one trap is active if possible
+    if (traps.size === 0 && s.trapPositions.length > 0) {
+      const randomIdx = Math.floor(Math.random() * s.trapPositions.length);
+      traps.add(s.trapPositions[randomIdx]);
+    }
+    setActiveTraps(traps);
+    return traps;
+  }, []);
+
+  // Update active traps when level/bug changes
+  useEffect(() => {
+    randomizeTraps(activeStage);
+  }, [currentStageId, currentBugIndex, editorMode, activeStage, randomizeTraps]);
+
   // ═══════ Derived stage for active play ═══════
   // For bug hunt, we use the current bug's grid/positions.
   // For level editor in solve mode, we use the custom grid.
@@ -184,10 +212,12 @@ export default function App() {
     setShowBugHuntOverlay(false);
     cancelRef.current = true;
 
+    randomizeTraps(activeStage);
+
     if (activeStage.hasRandomDoor) {
       setDoorOpen(Math.random() < 0.5);
     }
-  }, [activeStage]);
+  }, [activeStage, randomizeTraps]);
 
   // Run the code
   const handleRun = useCallback(() => {
@@ -211,6 +241,11 @@ export default function App() {
       setDoorOpen(currentDoorOpen);
     }
 
+    let currentTraps = activeTraps;
+    if (activeStage.hasTraps) {
+      currentTraps = randomizeTraps(activeStage);
+    }
+
     // Parse the code
     const parseResult = parseLuaCode(code, { doorOpen: currentDoorOpen });
     if (parseResult.error) {
@@ -226,7 +261,10 @@ export default function App() {
     }
 
     // Simulate execution
-    const simResult = simulateExecution(parseResult.commands, activeStage, { doorOpen: currentDoorOpen });
+    const simResult = simulateExecution(parseResult.commands, activeStage, {
+      doorOpen: currentDoorOpen,
+      activeTraps: Array.from(currentTraps),
+    });
     const { steps } = simResult;
 
     // Count actual code lines (non-empty, non-comment)
@@ -300,6 +338,9 @@ export default function App() {
             if (stage?.mode === 'levelEditor') {
               badge = { name: 'Level Designer', icon: '🏗️' };
               awardBadge(badge);
+            } else if (currentStageId === 10) {
+              badge = { name: 'Flying Solo', icon: '🎖️' };
+              awardBadge(badge);
             }
             setCurrentBadge(badge);
             setShowCelebration(true);
@@ -314,10 +355,20 @@ export default function App() {
 
         setTimeout(() => {
           setIsRunning(false);
+          let errMsg = activeStage.errorMessages?.[step.errorType] || 'Something went wrong!';
+          
+          if (currentStageId === 8 && step.errorType === 'trap') {
+            if (!code.includes('isTrap')) {
+              errMsg = activeStage.errorMessages?.trap || errMsg;
+            } else {
+              errMsg = (activeStage.errorMessages?.fall || errMsg).replace('line X', `line ${step.line}`);
+            }
+          }
+
           setShowError({
             line: step.line,
             errorType: step.errorType,
-            message: activeStage.errorMessages?.[step.errorType] || 'Something went wrong!',
+            message: errMsg,
           });
           // Show hint on failure in bug hunt
           if (stage?.mode === 'bugHunt' && !bugHintShown) {
@@ -577,6 +628,7 @@ export default function App() {
               showParticles={showParticles}
               isFailing={isFailing}
               doorOpen={doorOpen}
+              activeTraps={activeTraps}
             />
           )}
         </motion.div>
