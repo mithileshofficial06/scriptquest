@@ -2,7 +2,7 @@ import { useRef, useEffect, useCallback } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView, Decoration } from '@codemirror/view';
 import { StateEffect, StateField } from '@codemirror/state';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 /* ═══════════════════════════════════════════════
    Line Highlight Extension for CodeMirror
@@ -49,6 +49,12 @@ export default function CodeEditor({
   highlightType,
   availableFunctions,
   error,
+  doorOpen,
+  hasRandomDoor,
+  suggestedPattern,
+  funcNameInput,
+  onFuncNameInputChange,
+  onRefactor,
 }) {
   const editorRef = useRef(null);
   const viewRef = useRef(null);
@@ -154,6 +160,101 @@ export default function CodeEditor({
           ))}
         </div>
       </div>
+
+      {/* Environment Variables */}
+      {hasRandomDoor && (
+        <div className="px-5 py-2.5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(232, 185, 74, 0.005)' }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--color-text-dim)' }}>
+            Environment
+          </p>
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg" style={{ background: 'var(--color-surface)' }}>
+            <span className="font-code text-xs" style={{ color: 'var(--color-text-secondary)' }}>doorOpen = </span>
+            <div className="flex items-center gap-1.5">
+              <div
+                className="w-1.5 h-1.5 rounded-full"
+                style={{
+                  background: doorOpen ? 'var(--color-success)' : 'var(--color-danger)',
+                  boxShadow: `0 0 6px ${doorOpen ? 'var(--color-success)' : 'var(--color-danger)'}`,
+                  transition: 'background 0.3s, box-shadow 0.3s',
+                }}
+              />
+              <span className="text-xs font-bold font-code uppercase" style={{ color: doorOpen ? 'var(--color-success)' : 'var(--color-danger)', transition: 'color 0.3s' }}>
+                {doorOpen ? 'true' : 'false'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refactoring Suggestion Card */}
+      <AnimatePresence>
+        {suggestedPattern && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, margin: 0 }}
+            animate={{ opacity: 1, height: 'auto', margin: '12px 16px 4px 16px' }}
+            exit={{ opacity: 0, height: 0, margin: 0 }}
+            className="p-4 rounded-xl border glow-border"
+            style={{
+              background: 'rgba(232, 185, 74, 0.03)',
+              borderColor: 'var(--color-border-accent)',
+              overflow: 'hidden',
+            }}
+          >
+            <p className="text-xs font-bold text-gradient mb-1.5 flex items-center gap-1.5">
+              <span>💡 Code Wizard Tip!</span>
+            </p>
+            <p className="text-xs text-[var(--color-text-secondary)] mb-3 leading-relaxed">
+              I noticed you are repeating this pattern 3 times! Want to turn it into a custom function?
+            </p>
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {suggestedPattern.pattern.map((cmd, i) => (
+                <span
+                  key={i}
+                  className="px-2 py-0.5 rounded text-[10px] font-code"
+                  style={{
+                    background: 'var(--color-bg-dark)',
+                    color: 'var(--color-primary)',
+                    border: '1px solid var(--color-border)',
+                  }}
+                >
+                  {cmd}()
+                </span>
+              ))}
+            </div>
+            
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Function name (e.g. hop)"
+                value={funcNameInput}
+                onChange={(e) => onFuncNameInputChange(e.target.value.replace(/[^a-zA-Z]/g, ''))}
+                className="flex-1 px-3 py-2 rounded-lg text-xs font-code"
+                style={{
+                  background: 'var(--color-bg-dark)',
+                  color: 'var(--color-text)',
+                  border: '1px solid var(--color-border)',
+                  outline: 'none',
+                }}
+              />
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onRefactor}
+                disabled={!funcNameInput.trim()}
+                className="px-4 py-2 text-xs font-bold rounded-lg"
+                style={{
+                  background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-soft) 100%)',
+                  color: '#0a0a0f',
+                  opacity: funcNameInput.trim() ? 1 : 0.5,
+                  cursor: funcNameInput.trim() ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Name It!
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Editor Area */}
       <div className="flex-1 overflow-hidden min-h-0">

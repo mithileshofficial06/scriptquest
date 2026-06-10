@@ -5,8 +5,8 @@ const TOTAL_STAGES = 7;
 export default function ProgressBar({ currentStageId, completedStages }) {
   const stageNames = [
     'Commands',
-    'Variables',
     'Loops',
+    'Variables',
     'Conditionals',
     'Functions',
     'Tables',

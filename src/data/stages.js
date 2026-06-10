@@ -14,6 +14,7 @@ export const GRID_ROWS = 8;
 export const TILE_EMPTY = 0;
 export const TILE_PLATFORM = 1;
 export const TILE_WALL = 2;
+export const TILE_DOOR = 3;
 
 export const stages = [
   {
@@ -87,48 +88,107 @@ export const stages = [
   },
   {
     id: 3,
-    name: 'Loop Land',
-    subtitle: 'Loops',
-    description: 'Coming soon...',
-    availableFunctions: [],
-    starterCode: '',
-    grid: [],
-    playerStart: { col: 0, row: 0 },
-    starPosition: { col: 0, row: 0 },
-    optimalLines: 0,
-    celebration: { title: '', explanation: '', concept: '' },
-    errorMessages: {},
-    locked: true,
+    name: 'Speed Boost',
+    subtitle: 'Variables',
+    description: 'Set the right speed to clear the gaps!',
+    availableFunctions: ['moveRight()', 'speed = 5', 'repeat(n, func)'],
+    starterCode: '-- Set your speed to jump the gaps!\n-- speed = ???\n-- Then use moveRight()\n\n',
+    // Three platforms separated by 2-tile gaps
+    // Platform A: cols 0-2  |  gap: 3-4  |  Platform B: cols 5-7  |  gap: 8-9  |  Platform C: cols 10-11
+    grid: [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1],
+      [1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1],
+    ],
+    playerStart: { col: 1, row: 5 },
+    starPosition: { col: 11, row: 5 },
+    optimalLines: 2, // speed = 5 + repeat(2, moveRight)  or  speed = 10 + moveRight()
+    lineCountChallenge: 3,
+    celebration: {
+      title: '🎉 You mastered speed!',
+      explanation:
+        'You created a **variable** called **speed** and gave it a value. Variables are like labeled boxes — you put a number inside and the computer remembers it.\n\nWhen you wrote **speed = 5**, every **moveRight()** moved 5 tiles instead of 1. The value you chose determined whether you cleared the gaps or fell!',
+      concept: 'Variables',
+      codeHint: 'speed = 5\nrepeat(2, moveRight)',
+      codeHintLabel: 'Variables + loops in just 2 lines!',
+    },
+    errorMessages: {
+      wall: "You hit something solid. Try a different direction!",
+      fall: "Your avatar fell into the gap! Try adjusting your speed value.",
+      outOfBounds: "Your avatar overshot the world! Try a smaller speed.",
+    },
   },
   {
     id: 4,
     name: 'If Island',
     subtitle: 'Conditionals',
-    description: 'Coming soon...',
-    availableFunctions: [],
-    starterCode: '',
-    grid: [],
-    playerStart: { col: 0, row: 0 },
-    starPosition: { col: 0, row: 0 },
-    optimalLines: 0,
-    celebration: { title: '', explanation: '', concept: '' },
-    errorMessages: {},
-    locked: true,
+    description: 'The door to the star randomly opens or closes! Use an if/else block to handle both paths.',
+    availableFunctions: ['moveRight()', 'moveLeft()', 'jump()', 'if doorOpen then', 'else', 'end'],
+    starterCode: '-- The doorOpen variable changes randomly every run!\n-- Write an if/else block to choose the right path:\n-- if doorOpen then\n--   -- go straight\n-- else\n--   -- go around\n-- end\n\n',
+    grid: [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0], // ledge platform
+      [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0], // path floor (door at col 5)
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], // main floor
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    ],
+    playerStart: { col: 1, row: 5 },
+    starPosition: { col: 9, row: 5 },
+    optimalLines: 7,
+    lineCountChallenge: 8,
+    celebration: {
+      title: '🎉 You unlocked the gate!',
+      explanation:
+        'You used an **if/else conditional**! This lets your program make decisions based on variables.\n\nWhen the door was open, your code ran the first branch. When the door was closed, it ran the alternative path. That is how smart programs work!',
+      concept: 'Conditionals (If/Else)',
+    },
+    errorMessages: {
+      wall: "Oops! The door is closed, or you ran into a ledge. Try checking doorOpen!",
+      fall: "Whoops! Your avatar fell off the path. Make sure to jump at the right place!",
+      outOfBounds: "That's outside the world! Keep your avatar on the grid.",
+    },
+    hasRandomDoor: true,
   },
   {
     id: 5,
     name: 'Function Falls',
     subtitle: 'Functions',
-    description: 'Coming soon...',
-    availableFunctions: [],
-    starterCode: '',
-    grid: [],
-    playerStart: { col: 0, row: 0 },
-    starPosition: { col: 0, row: 0 },
-    optimalLines: 0,
-    celebration: { title: '', explanation: '', concept: '' },
-    errorMessages: {},
-    locked: true,
+    description: 'Define a custom function to cross the repeated obstacles in fewer lines!',
+    availableFunctions: ['moveRight()', 'jump()', 'function name()', 'end'],
+    starterCode: '-- Cross the three identical obstacles!\n-- Create a custom function to group your moves,\n-- then call it to clear each obstacle.\n\n',
+    grid: [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1], // ledge platforms
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // corridor
+      [1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1], // main floor gaps
+      [1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+    ],
+    playerStart: { col: 0, row: 5 },
+    starPosition: { col: 11, row: 3 },
+    optimalLines: 10,
+    lineCountChallenge: 10,
+    celebration: {
+      title: '🎉 You are a software architect!',
+      explanation:
+        'You created your very own **custom function**!\n\nFunctions let you group a sequence of commands and give them a single name. Instead of writing the same 4 steps over and over, you defined it once and called it by name. This makes your code cleaner, shorter, and much easier to read!',
+      concept: 'Custom Functions',
+    },
+    errorMessages: {
+      wall: "Oops! You hit a wall or fell off. Check your function definition!",
+      fall: "Your avatar fell into a gap! Make sure you repeat the correct pattern.",
+      outOfBounds: "Out of bounds! Stay on the platforms.",
+    },
   },
   {
     id: 6,

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { TILE_SIZE, TILE_PLATFORM, TILE_WALL, GRID_COLS, GRID_ROWS } from '../data/stages';
+import { TILE_SIZE, TILE_PLATFORM, TILE_WALL, TILE_DOOR, GRID_COLS, GRID_ROWS } from '../data/stages';
 
 /* ═══════════════════════════════════════════════════
    Premium SVG Avatar — refined Roblox-style character
@@ -235,6 +235,84 @@ function PlatformTile({ col, row, isTop }) {
   );
 }
 
+/* ═══════════════════════════════════════════
+   Roblox Door Tile — dynamic neon open/closed
+   ═══════════════════════════════════════════ */
+function DoorTile({ col, row, isOpen }) {
+  const x = col * TILE_SIZE;
+  const y = row * TILE_SIZE;
+
+  return (
+    <g>
+      {/* Door Frame — Neon glow */}
+      <rect
+        x={x + 2}
+        y={y + 2}
+        width={TILE_SIZE - 4}
+        height={TILE_SIZE - 4}
+        rx={6}
+        fill="rgba(20, 20, 28, 0.95)"
+        stroke={isOpen ? '#98c379' : '#e06c75'}
+        strokeWidth={3}
+        style={{
+          filter: `drop-shadow(0 0 8px ${isOpen ? 'rgba(152, 195, 121, 0.4)' : 'rgba(224, 108, 117, 0.4)'})`,
+          transition: 'stroke 0.4s, filter 0.4s',
+        }}
+      />
+
+      {/* Door glass/energy screen */}
+      <motion.rect
+        x={x + 6}
+        y={y + 6}
+        width={TILE_SIZE - 12}
+        height={TILE_SIZE - 12}
+        rx={4}
+        fill={isOpen ? 'rgba(152, 195, 121, 0.1)' : 'rgba(224, 108, 117, 0.85)'}
+        animate={{
+          opacity: isOpen ? [0.1, 0.2, 0.1] : [0.8, 0.95, 0.8],
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+        style={{
+          transition: 'fill 0.4s',
+        }}
+      />
+
+      {/* Lock/Unlock Icon */}
+      {!isOpen ? (
+        <g transform={`translate(${x + TILE_SIZE / 2 - 8}, ${y + TILE_SIZE / 2 - 10})`}>
+          <path
+            d="M 4 7 V 4 A 4 4 0 0 1 12 4 V 7"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth={2}
+            strokeLinecap="round"
+          />
+          <rect x={1} y={6} width={14} height={11} rx={2} fill="#ffffff" />
+          <circle cx={8} cy={11} r={1.5} fill="#e06c75" />
+        </g>
+      ) : (
+        <g transform={`translate(${x + TILE_SIZE / 2 - 8}, ${y + TILE_SIZE / 2 - 8})`}>
+          <path
+            d="M 2 8 L 6 12 L 14 4"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+      )}
+
+      {/* Warning stripe at bottom */}
+      <rect x={x + 8} y={y + TILE_SIZE - 8} width={TILE_SIZE - 16} height={3} fill="#1a1e24" />
+    </g>
+  );
+}
+
 /* ═══════════════════════════
    Ambient particles (dust)
    ═══════════════════════════ */
@@ -303,7 +381,7 @@ function ParticleBurst({ x, y, active }) {
 /* ═════════════════════════════════
    Main GameWorld Component
    ═════════════════════════════════ */
-export default function GameWorld({ stage, playerPos, executingLine, isRunning, starCollected, showParticles, isFailing }) {
+export default function GameWorld({ stage, playerPos, executingLine, isRunning, starCollected, showParticles, isFailing, doorOpen }) {
   if (!stage) return null;
 
   const { grid, starPosition } = stage;
@@ -386,6 +464,16 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
                   fill="#1a1e24"
                   stroke="#12151a"
                   strokeWidth={0.5}
+                />
+              );
+            }
+            if (tile === TILE_DOOR) {
+              return (
+                <DoorTile
+                  key={`${rowIdx}-${colIdx}`}
+                  col={colIdx}
+                  row={rowIdx}
+                  isOpen={doorOpen}
                 />
               );
             }

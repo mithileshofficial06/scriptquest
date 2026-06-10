@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import GameWorld from './components/GameWorld';
 import CodeEditor from './components/CodeEditor';
@@ -7,7 +7,7 @@ import CelebrationOverlay from './components/CelebrationOverlay';
 import ErrorOverlay from './components/ErrorOverlay';
 import StageHeader from './components/StageHeader';
 import { stages } from './data/stages';
-import { parseLuaCode, simulateExecution } from './engine/luaEngine';
+import { parseLuaCode, simulateExecution, detectRepeatedPattern, refactorCodeWithFunction } from './engine/luaEngine';
 import { loadProgress, markStageComplete } from './engine/storage';
 
 /* ===== Step animation timing ===== */
@@ -41,6 +41,51 @@ export default function App() {
   const [showParticles, setShowParticles] = useState(false);
   const [isFailing, setIsFailing] = useState(false);
   const [lineCount, setLineCount] = useState(0);
+  
+  // Stage 4/5 environment & wizard states
+  const [doorOpen, setDoorOpen] = useState(false);
+  const [suggestedPattern, setSuggestedPattern] = useState(null);
+  const [funcNameInput, setFuncNameInput] = useState('');
+
+  // Randomize door state on stage change
+  useEffect(() => {
+    if (stage?.hasRandomDoor) {
+      setDoorOpen(Math.random() < 0.5);
+    } else {
+      setDoorOpen(false);
+    }
+  }, [currentStageId, stage]);
+
+  // Pattern detection for functions (Stage 5)
+  useEffect(() => {
+    if (currentStageId === 5) {
+      const patternResult = detectRepeatedPattern(code);
+      if (patternResult) {
+        setSuggestedPattern(patternResult);
+      } else {
+        setSuggestedPattern(null);
+      }
+    } else {
+      setSuggestedPattern(null);
+    }
+  }, [code, currentStageId]);
+
+  const handleRefactor = useCallback(() => {
+    if (!suggestedPattern || !funcNameInput.trim()) return;
+    const cleanName = funcNameInput.trim().replace(/[^a-zA-Z]/g, '');
+    if (!cleanName) return;
+
+    const refactoredCode = refactorCodeWithFunction(
+      code,
+      cleanName,
+      suggestedPattern.pattern,
+      suggestedPattern.occurrences
+    );
+
+    setCode(refactoredCode);
+    setFuncNameInput('');
+    setSuggestedPattern(null);
+  }, [code, suggestedPattern, funcNameInput]);
 
   // Ref to cancel running animation
   const cancelRef = useRef(false);
@@ -59,6 +104,10 @@ export default function App() {
     setShowParticles(false);
     setIsFailing(false);
     cancelRef.current = true;
+
+    if (stage.hasRandomDoor) {
+      setDoorOpen(Math.random() < 0.5);
+    }
   }, [stage]);
 
   // Run the code
@@ -76,8 +125,14 @@ export default function App() {
     setHighlightType('executing');
     cancelRef.current = false;
 
+    let currentDoorOpen = doorOpen;
+    if (stage.hasRandomDoor) {
+      currentDoorOpen = Math.random() < 0.5;
+      setDoorOpen(currentDoorOpen);
+    }
+
     // Parse the code
-    const parseResult = parseLuaCode(code);
+    const parseResult = parseLuaCode(code, { doorOpen: currentDoorOpen });
     if (parseResult.error) {
       setCodeError(parseResult.error);
       setExecutingLine(parseResult.error.line);
@@ -86,7 +141,7 @@ export default function App() {
     }
 
     // Simulate execution
-    const simResult = simulateExecution(parseResult.commands, stage);
+    const simResult = simulateExecution(parseResult.commands, stage, { doorOpen: currentDoorOpen });
     const { steps } = simResult;
 
     // Count actual code lines (non-empty, non-comment)
@@ -225,6 +280,7 @@ export default function App() {
             starCollected={starCollected}
             showParticles={showParticles}
             isFailing={isFailing}
+            doorOpen={doorOpen}
           />
         </motion.div>
 
@@ -247,6 +303,12 @@ export default function App() {
             highlightType={highlightType}
             availableFunctions={stage?.availableFunctions ?? []}
             error={codeError}
+            doorOpen={doorOpen}
+            hasRandomDoor={stage?.hasRandomDoor}
+            suggestedPattern={suggestedPattern}
+            funcNameInput={funcNameInput}
+            onFuncNameInputChange={setFuncNameInput}
+            onRefactor={handleRefactor}
           />
         </motion.div>
       </div>
