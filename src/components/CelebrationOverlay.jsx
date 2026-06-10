@@ -23,6 +23,7 @@ export default function CelebrationOverlay({
   lineCountChallenge,
   onContinue,
   onRetry,
+  badge,
 }) {
   if (!celebration) return null;
 
@@ -104,6 +105,31 @@ export default function CelebrationOverlay({
                 📝 {lineCount} lines of code
               </div>
             </div>
+
+            {/* Badge award */}
+            {badge && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+                className="flex justify-center mb-5"
+              >
+                <div
+                  className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-sm font-bold"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(232,185,74,0.12) 0%, rgba(232,185,74,0.04) 100%)',
+                    border: '1.5px solid var(--color-border-accent)',
+                    color: 'var(--color-primary)',
+                    boxShadow: '0 0 30px var(--color-primary-glow), inset 0 1px 0 rgba(255,255,255,0.06)',
+                    animation: 'shimmer 3s infinite',
+                    backgroundSize: '200% auto',
+                  }}
+                >
+                  <span className="text-xl">{badge.icon}</span>
+                  <span>{badge.name}</span>
+                </div>
+              </motion.div>
+            )}
 
             {/* Real Code Reveal */}
             <div

@@ -9,8 +9,8 @@ export default function ProgressBar({ currentStageId, completedStages }) {
     'Variables',
     'Conditionals',
     'Functions',
-    'Tables',
-    'Final Quest',
+    'Bug Hunt',
+    'Your Level',
   ];
 
   return (
