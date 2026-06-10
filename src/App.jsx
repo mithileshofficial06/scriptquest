@@ -445,9 +445,13 @@ export default function App() {
   const showLevelEditor = isLevelEditor && editorMode === 'editing';
 
   return (
-    <div id="app-root" className="h-screen flex flex-col" style={{ background: 'var(--color-bg-dark)' }}>
+    <div id="app-root" className="h-screen flex flex-col relative overflow-hidden" style={{ background: 'var(--color-bg-dark)' }}>
+      {/* Background glowing auroras */}
+      <div className="bg-blob bg-blob-primary" />
+      <div className="bg-blob bg-blob-secondary" />
+
       {/* Main content area */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 relative z-10">
         {/* Left: Game World or Level Editor (60%) */}
         <motion.div
           className="relative"

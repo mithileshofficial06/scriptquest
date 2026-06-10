@@ -4,7 +4,7 @@ import { TILE_SIZE, TILE_PLATFORM, TILE_WALL, TILE_DOOR, GRID_COLS, GRID_ROWS } 
 /* ═══════════════════════════════════════════════════
    Premium SVG Avatar — refined Roblox-style character
    ═══════════════════════════════════════════════════ */
-function Avatar({ col, row, isJumping, isFailing, direction }) {
+function Avatar({ col, row, isJumping, isFailing, direction, isRunning }) {
   const x = col * TILE_SIZE;
   const y = row * TILE_SIZE;
 
@@ -47,86 +47,152 @@ function Avatar({ col, row, isJumping, isFailing, direction }) {
         </linearGradient>
       </defs>
 
-      {/* Body */}
-      <rect
-        x={15} y={18} width={30} height={28} rx={4}
-        fill="url(#bodyGrad)"
-        stroke="#b8862a"
-        strokeWidth={1.5}
-      />
-      {/* Body shine */}
-      <rect
-        x={17} y={20} width={8} height={12} rx={2}
-        fill="rgba(255,255,255,0.15)"
-      />
-
-      {/* Head */}
-      <rect
-        x={12} y={2} width={36} height={20} rx={4}
-        fill="url(#headGrad)"
-        stroke="#c9b88a"
-        strokeWidth={1.5}
-      />
-
-      {/* Eyes — darker, more expressive */}
-      <rect
-        x={direction === 'left' ? 17 : 21}
-        y={8} width={7} height={8} rx={2}
-        fill="#1a1a28"
+      {/* Walking animations - bobbing group */}
+      <motion.g
+        animate={isRunning && !isFailing ? {
+          y: [0, -2, 0]
+        } : { y: 0 }}
+        transition={{
+          duration: 0.35,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
       >
-        <animate
-          attributeName="height"
-          values="8;2;8"
-          dur="3.5s"
-          repeatCount="indefinite"
-          begin="1.5s"
+        {/* Torso/Body */}
+        <rect
+          x={15} y={18} width={30} height={28} rx={4}
+          fill="url(#bodyGrad)"
+          stroke="#b8862a"
+          strokeWidth={1.5}
         />
-      </rect>
-      <rect
-        x={direction === 'left' ? 30 : 34}
-        y={8} width={7} height={8} rx={2}
-        fill="#1a1a28"
+        {/* Body shine */}
+        <rect
+          x={17} y={20} width={8} height={12} rx={2}
+          fill="rgba(255,255,255,0.15)"
+        />
+
+        {/* Head */}
+        <rect
+          x={12} y={2} width={36} height={20} rx={4}
+          fill="url(#headGrad)"
+          stroke="#c9b88a"
+          strokeWidth={1.5}
+        />
+
+        {/* Eyes — darker, more expressive */}
+        <rect
+          x={direction === 'left' ? 17 : 21}
+          y={8} width={7} height={8} rx={2}
+          fill="#1a1a28"
+        >
+          <animate
+            attributeName="height"
+            values="8;2;8"
+            dur="3.5s"
+            repeatCount="indefinite"
+            begin="1.5s"
+          />
+        </rect>
+        <rect
+          x={direction === 'left' ? 30 : 34}
+          y={8} width={7} height={8} rx={2}
+          fill="#1a1a28"
+        >
+          <animate
+            attributeName="height"
+            values="8;2;8"
+            dur="3.5s"
+            repeatCount="indefinite"
+            begin="1.5s"
+          />
+        </rect>
+        {/* Eye highlights */}
+        <rect
+          x={direction === 'left' ? 19 : 23}
+          y={9} width={2} height={2} rx={1}
+          fill="rgba(255,255,255,0.7)"
+        />
+        <rect
+          x={direction === 'left' ? 32 : 36}
+          y={9} width={2} height={2} rx={1}
+          fill="rgba(255,255,255,0.7)"
+        />
+
+        {/* Mouth */}
+        <path
+          d={`M ${23} ${16} Q ${30} ${21} ${37} ${16}`}
+          fill="none"
+          stroke="#8a7a6a"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+        />
+
+        {/* Left Arm */}
+        <motion.rect
+          x={6} y={22} width={9} height={6} rx={3}
+          fill="#d4a23a"
+          stroke="#b8862a"
+          strokeWidth={1}
+          animate={isRunning && !isFailing ? {
+            rotate: [15, -15, 15],
+          } : { rotate: 0 }}
+          transition={{
+            duration: 0.35,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          style={{ transformOrigin: '11px 25px' }}
+        />
+
+        {/* Right Arm */}
+        <motion.rect
+          x={45} y={22} width={9} height={6} rx={3}
+          fill="#d4a23a"
+          stroke="#b8862a"
+          strokeWidth={1}
+          animate={isRunning && !isFailing ? {
+            rotate: [-15, 15, -15],
+          } : { rotate: 0 }}
+          transition={{
+            duration: 0.35,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          style={{ transformOrigin: '49px 25px' }}
+        />
+      </motion.g>
+
+      {/* Left Leg and Shoe */}
+      <motion.g
+        animate={isRunning && !isFailing ? {
+          rotate: [-18, 18, -18],
+        } : { rotate: 0 }}
+        transition={{
+          duration: 0.35,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+        style={{ transformOrigin: '23px 46px' }}
       >
-        <animate
-          attributeName="height"
-          values="8;2;8"
-          dur="3.5s"
-          repeatCount="indefinite"
-          begin="1.5s"
-        />
-      </rect>
-      {/* Eye highlights */}
-      <rect
-        x={direction === 'left' ? 19 : 23}
-        y={9} width={2} height={2} rx={1}
-        fill="rgba(255,255,255,0.7)"
-      />
-      <rect
-        x={direction === 'left' ? 32 : 36}
-        y={9} width={2} height={2} rx={1}
-        fill="rgba(255,255,255,0.7)"
-      />
+        <rect x={18} y={46} width={10} height={10} rx={3} fill="url(#legGrad)" />
+        <rect x={16} y={54} width={14} height={4} rx={2} fill="#1a1a28" stroke="#2a2a3a" strokeWidth={0.5} />
+      </motion.g>
 
-      {/* Mouth */}
-      <path
-        d={`M ${23} ${16} Q ${30} ${21} ${37} ${16}`}
-        fill="none"
-        stroke="#8a7a6a"
-        strokeWidth={1.5}
-        strokeLinecap="round"
-      />
-
-      {/* Arms */}
-      <rect x={6} y={22} width={9} height={6} rx={3} fill="#d4a23a" stroke="#b8862a" strokeWidth={1} />
-      <rect x={45} y={22} width={9} height={6} rx={3} fill="#d4a23a" stroke="#b8862a" strokeWidth={1} />
-
-      {/* Legs */}
-      <rect x={18} y={46} width={10} height={10} rx={3} fill="url(#legGrad)" />
-      <rect x={32} y={46} width={10} height={10} rx={3} fill="url(#legGrad)" />
-
-      {/* Shoes */}
-      <rect x={16} y={54} width={14} height={4} rx={2} fill="#1a1a28" stroke="#2a2a3a" strokeWidth={0.5} />
-      <rect x={30} y={54} width={14} height={4} rx={2} fill="#1a1a28" stroke="#2a2a3a" strokeWidth={0.5} />
+      {/* Right Leg and Shoe */}
+      <motion.g
+        animate={isRunning && !isFailing ? {
+          rotate: [18, -18, 18],
+        } : { rotate: 0 }}
+        transition={{
+          duration: 0.35,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+        style={{ transformOrigin: '37px 46px' }}
+      >
+        <rect x={32} y={46} width={10} height={10} rx={3} fill="url(#legGrad)" />
+        <rect x={30} y={54} width={14} height={4} rx={2} fill="#1a1a28" stroke="#2a2a3a" strokeWidth={0.5} />
+      </motion.g>
     </motion.g>
   );
 }
@@ -143,9 +209,21 @@ function Star({ col, row, collected }) {
       {!collected && (
         <motion.g
           initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
+          animate={{
+            scale: 1,
+            opacity: 1,
+            y: [0, -6, 0]
+          }}
           exit={{ scale: 2.5, opacity: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{
+            scale: { duration: 0.4 },
+            opacity: { duration: 0.4 },
+            y: {
+              duration: 2.2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }
+          }}
         >
           {/* Outer glow */}
           <circle cx={cx} cy={cy} r={28} fill="rgba(232,185,74,0.06)">
@@ -198,37 +276,40 @@ function PlatformTile({ col, row, isTop }) {
 
   return (
     <g>
-      {/* Main block — dark stone */}
+      {/* Main block — gradient obsidian/stone */}
       <rect
         x={x} y={y}
         width={TILE_SIZE} height={TILE_SIZE}
-        fill="#1a1e24"
-        stroke="#12151a"
-        strokeWidth={0.5}
+        fill="url(#stoneGrad)"
+        stroke="#0d0f14"
+        strokeWidth={1}
+      />
+      {/* Bevel highlight */}
+      <rect
+        x={x + 1} y={y + 1}
+        width={TILE_SIZE - 2} height={TILE_SIZE - 2}
+        fill="none"
+        stroke="rgba(255,255,255,0.03)"
+        strokeWidth={1}
       />
       {/* Subtle stone texture */}
-      <rect x={x + 5} y={y + 12} width={12} height={8} rx={1} fill="rgba(255,255,255,0.02)" />
-      <rect x={x + 28} y={y + 25} width={18} height={10} rx={1} fill="rgba(255,255,255,0.015)" />
-      <rect x={x + 10} y={y + 38} width={15} height={8} rx={1} fill="rgba(255,255,255,0.02)" />
+      <rect x={x + 5} y={y + 12} width={12} height={8} rx={2} fill="rgba(255,255,255,0.015)" />
+      <rect x={x + 28} y={y + 25} width={18} height={10} rx={2} fill="rgba(255,255,255,0.01)" />
+      <rect x={x + 10} y={y + 38} width={15} height={8} rx={2} fill="rgba(255,255,255,0.015)" />
 
       {/* Top edge — golden accent line (only on topmost platform row) */}
       {isTop && (
         <>
           <rect
             x={x} y={y}
-            width={TILE_SIZE} height={2}
-            fill="var(--color-primary)"
-            opacity={0.5}
+            width={TILE_SIZE} height={3}
+            fill="url(#goldBorderGrad)"
           />
           <rect
-            x={x} y={y + 2}
-            width={TILE_SIZE} height={3}
-            fill="rgba(232,185,74,0.1)"
+            x={x} y={y + 3}
+            width={TILE_SIZE} height={4}
+            fill="rgba(232,185,74,0.08)"
           />
-          {/* Small decorative notches */}
-          <rect x={x + 10} y={y - 1} width={2} height={3} rx={1} fill="rgba(232,185,74,0.3)" />
-          <rect x={x + 30} y={y - 2} width={2} height={4} rx={1} fill="rgba(232,185,74,0.25)" />
-          <rect x={x + 48} y={y - 1} width={2} height={3} rx={1} fill="rgba(232,185,74,0.2)" />
         </>
       )}
     </g>
@@ -434,6 +515,27 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
         className="max-w-full max-h-full"
         style={{ filter: 'drop-shadow(0 0 50px rgba(0,0,0,0.4))' }}
       >
+        <defs>
+          {/* Platform tile stone gradient */}
+          <linearGradient id="stoneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#222731" />
+            <stop offset="100%" stopColor="#12141a" />
+          </linearGradient>
+          
+          {/* Wall block gradient */}
+          <linearGradient id="wallGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#161821" />
+            <stop offset="100%" stopColor="#0a0b0f" />
+          </linearGradient>
+
+          {/* Gold highlight bar gradient */}
+          <linearGradient id="goldBorderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#e8b94a" />
+            <stop offset="50%" stopColor="#fff8e3" />
+            <stop offset="100%" stopColor="#d4a23a" />
+          </linearGradient>
+        </defs>
+
         {/* Ambient floating particles */}
         {Array.from({ length: 8 }, (_, i) => (
           <AmbientParticle
@@ -461,9 +563,9 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
                   y={rowIdx * TILE_SIZE}
                   width={TILE_SIZE}
                   height={TILE_SIZE}
-                  fill="#1a1e24"
-                  stroke="#12151a"
-                  strokeWidth={0.5}
+                  fill="url(#wallGrad)"
+                  stroke="#0d0f14"
+                  strokeWidth={1}
                 />
               );
             }
@@ -498,6 +600,7 @@ export default function GameWorld({ stage, playerPos, executingLine, isRunning, 
           isJumping={false}
           isFailing={isFailing}
           direction={direction}
+          isRunning={isRunning}
         />
 
         {/* Executing line badge */}

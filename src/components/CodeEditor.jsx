@@ -380,6 +380,18 @@ export default function CodeEditor({
               cursor: hintsUsed >= hints.length ? 'not-allowed' : 'pointer',
               minWidth: '80px',
             }}
+            animate={hintsUsed < hints.length && !isRunning ? {
+              boxShadow: [
+                '0 0 0 0 rgba(232, 185, 74, 0)',
+                '0 0 12px rgba(232, 185, 74, 0.25)',
+                '0 0 0 0 rgba(232, 185, 74, 0)'
+              ]
+            } : { boxShadow: 'none' }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
           >
             <span className="text-base">💡</span>
             <span>{hints.length - hintsUsed}</span>
@@ -393,7 +405,7 @@ export default function CodeEditor({
           whileTap={{ scale: isRunning ? 1 : 0.985 }}
           onClick={onRun}
           disabled={isRunning}
-          className="btn-primary flex-1 text-sm flex items-center justify-center gap-3"
+          className="btn-primary shimmer-btn flex-1 text-sm flex items-center justify-center gap-3"
           style={{
             ...(isRunning ? {
               background: 'var(--color-surface)',

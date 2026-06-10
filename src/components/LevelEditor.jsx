@@ -167,6 +167,21 @@ export default function LevelEditor({
           className="max-w-full max-h-full"
           style={{ filter: 'drop-shadow(0 0 50px rgba(0,0,0,0.4))' }}
         >
+          <defs>
+            {/* Platform tile stone gradient */}
+            <linearGradient id="stoneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#222731" />
+              <stop offset="100%" stopColor="#12141a" />
+            </linearGradient>
+            
+            {/* Gold highlight bar gradient */}
+            <linearGradient id="goldBorderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#e8b94a" />
+              <stop offset="50%" stopColor="#fff8e3" />
+              <stop offset="100%" stopColor="#d4a23a" />
+            </linearGradient>
+          </defs>
+
           {/* Grid cells */}
           {grid.map((rowTiles, rowIdx) =>
             rowTiles.map((tile, colIdx) => {
@@ -187,34 +202,61 @@ export default function LevelEditor({
                     y={y}
                     width={TILE_SIZE}
                     height={TILE_SIZE}
-                    fill={isPlatform ? '#1a1e24' : 'rgba(255,255,255,0.015)'}
-                    stroke="rgba(255,255,255,0.06)"
+                    fill={isPlatform ? 'url(#stoneGrad)' : 'rgba(255,255,255,0.01)'}
+                    stroke="rgba(255,255,255,0.04)"
                     strokeWidth={0.5}
                   />
-                  {/* Platform fill */}
+                  {/* Bevel highlight */}
+                  {isPlatform && (
+                    <rect
+                      x={x + 1} y={y + 1}
+                      width={TILE_SIZE - 2} height={TILE_SIZE - 2}
+                      fill="none"
+                      stroke="rgba(255,255,255,0.03)"
+                      strokeWidth={1}
+                    />
+                  )}
+                  {/* Platform fill textures */}
                   {isPlatform && (
                     <>
                       <rect
                         x={x + 5} y={y + 12}
-                        width={12} height={8} rx={1}
-                        fill="rgba(255,255,255,0.02)"
+                        width={12} height={8} rx={2}
+                        fill="rgba(255,255,255,0.015)"
                       />
                       <rect
                         x={x + 28} y={y + 25}
-                        width={18} height={10} rx={1}
-                        fill="rgba(255,255,255,0.015)"
+                        width={18} height={10} rx={2}
+                        fill="rgba(255,255,255,0.01)"
                       />
                       {/* Top edge accent if air above */}
                       {(rowIdx === 0 || grid[rowIdx - 1]?.[colIdx] !== 1) && (
-                        <rect
-                          x={x} y={y}
-                          width={TILE_SIZE} height={2}
-                          fill="var(--color-primary)"
-                          opacity={0.5}
-                        />
+                        <>
+                          <rect
+                            x={x} y={y}
+                            width={TILE_SIZE} height={3}
+                            fill="url(#goldBorderGrad)"
+                          />
+                          <rect
+                            x={x} y={y + 3}
+                            width={TILE_SIZE} height={4}
+                            fill="rgba(232,185,74,0.08)"
+                          />
+                        </>
                       )}
                     </>
                   )}
+                  {/* Interactive focus outline on hover */}
+                  <rect
+                    x={x + 0.5}
+                    y={y + 0.5}
+                    width={TILE_SIZE - 1}
+                    height={TILE_SIZE - 1}
+                    fill="rgba(232, 185, 74, 0.05)"
+                    stroke="var(--color-primary)"
+                    strokeWidth={1.5}
+                    className="tile-hover-glow pointer-events-none"
+                  />
                 </g>
               );
             })

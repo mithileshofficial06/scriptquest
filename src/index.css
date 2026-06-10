@@ -382,3 +382,12 @@ body {
   height: 1px;
   background: linear-gradient(90deg, transparent 0%, var(--color-border-subtle) 20%, var(--color-border-accent) 50%, var(--color-border-subtle) 80%, transparent 100%);
 }
+
+/* ===== Level Editor Interactive Focus Grid ===== */
+.tile-hover-glow {
+  opacity: 0;
+  transition: opacity 0.12s ease-out;
+}
+g:hover .tile-hover-glow {
+  opacity: 1;
+}
