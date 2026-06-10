@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 
 const TOTAL_STAGES = 7;
 
-export default function ProgressBar({ currentStageId, completedStages }) {
+export default function ProgressBar({ currentStageId, completedStages, onSelectStage }) {
   const stageNames = [
     'Commands',
     'Loops',
@@ -53,7 +53,8 @@ export default function ProgressBar({ currentStageId, completedStages }) {
                   scale: isCurrent ? 1.1 : 1,
                   opacity: isCurrent || isCompleted ? 1 : 0.35,
                 }}
-                className="relative flex flex-col items-center"
+                className="relative flex flex-col items-center cursor-pointer"
+                onClick={() => onSelectStage && onSelectStage(stageId)}
               >
                 {/* Node */}
                 <div

@@ -65,6 +65,9 @@ export default function App() {
   // Ref to cancel running animation
   const cancelRef = useRef(false);
 
+  // ═══════ Hints state ═══════
+  const [hintsUsed, setHintsUsed] = useState(0);
+
   // ═══════ Derived stage for active play ═══════
   // For bug hunt, we use the current bug's grid/positions.
   // For level editor in solve mode, we use the custom grid.
@@ -140,6 +143,11 @@ export default function App() {
       }
     }
   }, [currentStageId]);
+
+  // Reset hints when stage or bug index changes
+  useEffect(() => {
+    setHintsUsed(0);
+  }, [currentStageId, currentBugIndex]);
 
   // ═══════ Handlers ═══════
 
@@ -594,6 +602,9 @@ export default function App() {
             funcNameInput={funcNameInput}
             onFuncNameInputChange={setFuncNameInput}
             onRefactor={handleRefactor}
+            hints={activeStage?.hints}
+            hintsUsed={hintsUsed}
+            onUseHint={() => setHintsUsed((prev) => Math.min(prev + 1, activeStage?.hints?.length || 3))}
           />
         </motion.div>
       </div>
@@ -602,6 +613,25 @@ export default function App() {
       <ProgressBar
         currentStageId={currentStageId}
         completedStages={progress.completedStages}
+        onSelectStage={(stageId) => {
+          const targetStage = stages.find((s) => s.id === stageId);
+          if (targetStage) {
+            setCurrentStageId(stageId);
+            setPlayerPos({
+              col: targetStage.playerStart.col,
+              row: targetStage.playerStart.row,
+            });
+            setCode(targetStage.starterCode || '');
+            setShowCelebration(false);
+            setStarCollected(false);
+            setShowParticles(false);
+            setIsRunning(false);
+            setExecutingLine(-1);
+            setCodeError(null);
+            setShowError(null);
+            setCurrentBadge(null);
+          }
+        }}
       />
 
       {/* Overlays */}

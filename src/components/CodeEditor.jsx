@@ -55,6 +55,9 @@ export default function CodeEditor({
   funcNameInput,
   onFuncNameInputChange,
   onRefactor,
+  hints,
+  hintsUsed,
+  onUseHint,
 }) {
   const editorRef = useRef(null);
   const viewRef = useRef(null);
@@ -282,6 +285,51 @@ export default function CodeEditor({
         />
       </div>
 
+      {/* Hint Display */}
+      <AnimatePresence>
+        {hints && hintsUsed > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mx-4 mt-3 overflow-hidden"
+          >
+            <div
+              className="p-3 rounded-xl"
+              style={{
+                background: 'rgba(232, 185, 74, 0.04)',
+                border: '1px solid rgba(232, 185, 74, 0.12)',
+              }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm">💡</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--color-primary)' }}>
+                  Hint {hintsUsed} of {hints.length}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {hints.slice(0, hintsUsed).map((hint, i) => (
+                  <motion.p
+                    key={i}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="text-xs leading-relaxed whitespace-pre-line"
+                    style={{
+                      color: i === hintsUsed - 1 ? 'var(--color-text)' : 'var(--color-text-dim)',
+                      paddingLeft: '8px',
+                      borderLeft: `2px solid ${i === hintsUsed - 1 ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                    }}
+                  >
+                    {hint}
+                  </motion.p>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Error Display */}
       {error && (
         <motion.div
@@ -305,15 +353,47 @@ export default function CodeEditor({
         </motion.div>
       )}
 
-      {/* Run Button */}
-      <div className="p-4" style={{ borderTop: '1px solid var(--color-border)' }}>
+      {/* Run Button + Hint Button */}
+      <div className="p-4 flex gap-2" style={{ borderTop: '1px solid var(--color-border)' }}>
+        {/* Hint Button */}
+        {hints && hints.length > 0 && (
+          <motion.button
+            id="hint-button"
+            whileHover={{ scale: hintsUsed >= hints.length ? 1 : 1.05 }}
+            whileTap={{ scale: hintsUsed >= hints.length ? 1 : 0.95 }}
+            onClick={onUseHint}
+            disabled={hintsUsed >= hints.length || isRunning}
+            className="relative flex items-center justify-center gap-1.5 px-4 rounded-xl text-xs font-bold transition-all duration-200"
+            style={{
+              background: hintsUsed >= hints.length
+                ? 'var(--color-surface)'
+                : 'rgba(232, 185, 74, 0.06)',
+              border: `1.5px solid ${
+                hintsUsed >= hints.length
+                  ? 'var(--color-border)'
+                  : 'var(--color-border-accent)'
+              }`,
+              color: hintsUsed >= hints.length
+                ? 'var(--color-text-dim)'
+                : 'var(--color-primary)',
+              opacity: hintsUsed >= hints.length ? 0.5 : 1,
+              cursor: hintsUsed >= hints.length ? 'not-allowed' : 'pointer',
+              minWidth: '80px',
+            }}
+          >
+            <span className="text-base">💡</span>
+            <span>{hints.length - hintsUsed}</span>
+          </motion.button>
+        )}
+
+        {/* Run button */}
         <motion.button
           id="run-button"
           whileHover={{ scale: isRunning ? 1 : 1.015 }}
           whileTap={{ scale: isRunning ? 1 : 0.985 }}
           onClick={onRun}
           disabled={isRunning}
-          className="btn-primary w-full text-sm flex items-center justify-center gap-3"
+          className="btn-primary flex-1 text-sm flex items-center justify-center gap-3"
           style={{
             ...(isRunning ? {
               background: 'var(--color-surface)',

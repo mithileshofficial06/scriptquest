@@ -44,6 +44,11 @@ export const stages = [
         'Each line you wrote is a **command**. Lua runs them one by one, from top to bottom — this is called **sequential execution**.\n\nJust like giving directions to a friend, your code told the avatar exactly what to do, step by step!',
       concept: 'Sequential Execution',
     },
+    hints: [
+      '💡 The star is to the right of your avatar. Which command moves you right?',
+      '💡 You need to use moveRight() — try typing it and hitting Run!',
+      '💡 The star is 9 steps to the right. Type moveRight() on 9 separate lines!',
+    ],
     errorMessages: {
       wall: "Nothing there to walk into. Try a different direction!",
       fall: "Whoops! Your avatar fell off the platform. Try again!",
@@ -80,6 +85,11 @@ export const stages = [
       codeHintLabel: 'Same result, just 1 line! 🤯',
       retryPrompt: '🔁 Try it with repeat() — can you do it in under 3 lines?',
     },
+    hints: [
+      '💡 The star is 8 steps away. You can write moveRight() eight times… or find a shorter way!',
+      '💡 Check the Commands panel — see repeat(n, func)? It runs a command n times in one line.',
+      '💡 Try: repeat(8, moveRight) — that moves right 8 times in just 1 line!',
+    ],
     errorMessages: {
       wall: "Nothing there to walk into. Try a different direction!",
       fall: "Whoops! Your avatar fell off the edge!",
@@ -117,6 +127,11 @@ export const stages = [
       codeHint: 'speed = 5\nrepeat(2, moveRight)',
       codeHintLabel: 'Variables + loops in just 2 lines!',
     },
+    hints: [
+      '💡 There are gaps in the floor! A normal moveRight() only moves 1 tile — that\'s not enough to clear a gap.',
+      '💡 Use speed = ? to set how many tiles each moveRight() covers. The gaps are 2 tiles wide, and each platform is 3 tiles.',
+      '💡 Try: speed = 5, then repeat(2, moveRight). Each move jumps 5 tiles — right over the gaps!',
+    ],
     errorMessages: {
       wall: "You hit something solid. Try a different direction!",
       fall: "Your avatar fell into the gap! Try adjusting your speed value.",
@@ -150,6 +165,11 @@ export const stages = [
         'You used an **if/else conditional**! This lets your program make decisions based on variables.\n\nWhen the door was open, your code ran the first branch. When the door was closed, it ran the alternative path. That is how smart programs work!',
       concept: 'Conditionals (If/Else)',
     },
+    hints: [
+      '💡 The door opens or closes randomly! Your code needs to handle BOTH cases.',
+      '💡 Use an if/else block: if doorOpen then ... else ... end. When the door is open, go straight. When closed, go around!',
+      '💡 Try:\nif doorOpen then\n  repeat(8, moveRight)\nelse\n  moveRight()\n  moveRight()\n  jump()\n  repeat(6, moveRight)\nend',
+    ],
     errorMessages: {
       wall: "Oops! The door is closed, or you ran into a ledge. Try checking doorOpen!",
       fall: "Whoops! Your avatar fell off the path. Make sure to jump at the right place!",
@@ -184,6 +204,11 @@ export const stages = [
         'You created your very own **custom function**!\n\nFunctions let you group a sequence of commands and give them a single name. Instead of writing the same 4 steps over and over, you defined it once and called it by name. This makes your code cleaner, shorter, and much easier to read!',
       concept: 'Custom Functions',
     },
+    hints: [
+      '💡 There are 3 identical obstacles. You need to repeat the same sequence of moves for each one!',
+      '💡 You can create a custom function! Write: function myFunc() ... end — then call myFunc() to run those moves.',
+      '💡 Define a function with the moves to clear one obstacle (moveRight, jump, moveRight, etc.), then call it 3 times!',
+    ],
     errorMessages: {
       wall: "Oops! You hit a wall or fell off. Check your function definition!",
       fall: "Your avatar fell into a gap! Make sure you repeat the correct pattern.",
@@ -217,6 +242,11 @@ export const stages = [
         'You found and fixed **3 real bugs**! Debugging is one of the most important skills in programming. Every professional coder spends time reading code, spotting mistakes, and testing fixes — just like you did!',
       concept: 'Debugging',
     },
+    hints: [
+      '💡 Read the code carefully line by line. Something doesn\'t match the level layout!',
+      '💡 Try running the code and watching WHERE the avatar goes wrong — that tells you which line has the bug.',
+      '💡 Check the specific values and names in the code. Is every number, function name, and variable correct?',
+    ],
     errorMessages: {
       wall: "The avatar hit something. Check the code for errors!",
       fall: "The avatar fell! The bug is still there — keep looking!",
@@ -229,6 +259,11 @@ export const stages = [
         description: 'The star is 8 steps away, but the code only moves 5 times. Fix the number!',
         buggyCode: '-- This code has a bug!\n-- The star is 8 steps to the right.\n-- Can you spot the mistake?\n\nrepeat(5, moveRight)',
         hint: 'Count the tiles between the avatar and the star. Is the repeat number correct?',
+        hints: [
+          '💡 Watch the avatar move. It stops before the star. Why?',
+          '💡 Count the tiles between the avatar and the star. It is 8 tiles.',
+          '💡 Look at the repeat command: repeat(5, moveRight). 5 is too small! Change 5 to 8.',
+        ],
         explanation: 'The **repeat count was wrong**. The star was 8 steps away, but the code said `repeat(5, moveRight)`. Off-by-one and wrong-count bugs are extremely common — always double-check your numbers!',
         grid: [
           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -249,6 +284,11 @@ export const stages = [
         description: 'There\'s a typo hiding in this code. Read each line carefully!',
         buggyCode: '-- This code has a typo somewhere.\n-- Read each line carefully!\n\nmoveRight()\nmoveRight()\nmoverRight()\nmoveRight()\nmoveRight()',
         hint: 'Look at line 6 very carefully. Does that function name look right?',
+        hints: [
+          '💡 The editor shows a red warning on one of the lines. Check that line!',
+          '💡 Look closely at the spelling of the moveRight commands. Do they all match?',
+          '💡 Line 6 says moverRight() instead of moveRight(). Delete the extra letter "r"!',
+        ],
         explanation: 'Line 6 said `moverRight()` instead of `moveRight()` — an extra letter "r"! **Typos** are the #1 most common bug in all of programming. Computers are very strict — one wrong letter and nothing works.',
         grid: [
           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -269,6 +309,11 @@ export const stages = [
         description: 'This if/else block checks the wrong variable. Fix it!',
         buggyCode: '-- This code checks the wrong variable!\n-- doorOpen is true or false, but...\n\nif doorClosed then\n  repeat(8, moveRight)\nelse\n  moveRight()\n  moveRight()\n  jump()\n  repeat(6, moveRight)\nend',
         hint: 'What variable does the environment panel show? Is "doorClosed" the right name?',
+        hints: [
+          '💡 The condition checks if a door is closed, but look at the environment panel. What is the name of the variable there?',
+          '💡 The variable is doorOpen, not doorClosed. The condition is checking the wrong variable name.',
+          '💡 Change "if doorClosed then" to "if doorOpen then" to check the correct variable.',
+        ],
         explanation: 'The code checked `doorClosed` but the actual variable is called `doorOpen`. **Using the wrong variable name** is a logic bug — the code runs fine, but it makes the wrong decision. Always check that your variable names match!',
         grid: [
           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -313,6 +358,11 @@ export const stages = [
         'You didn\'t just play a game — you **built one and solved it**! Creating levels, setting rules, and writing code to meet those rules is exactly what real game developers do every day. You are now officially a ScriptQuest game designer!',
       concept: 'Level Design',
     },
+    hints: [
+      '💡 Count the tiles between your start and star positions. That tells you how many moves you need!',
+      '💡 Use the commands you\'ve learned: moveRight(), jump(), repeat() — combine them to reach the star.',
+      '💡 If your path has gaps, try jump() to leap over them, or use speed with moveRight() to cover more ground!',
+    ],
     errorMessages: {
       wall: "Your avatar hit a platform. Adjust your code!",
       fall: "Your avatar fell into a gap! Try a different approach.",
